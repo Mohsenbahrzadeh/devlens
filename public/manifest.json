@@ -1,11 +1,10 @@
 {
   "manifest_version": 3,
   "name": "DevLens",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A privacy-first developer toolbox for inspecting JWTs, JSON, HTTP requests and encoded data.",
   "action": {
-    "default_title": "DevLens",
-    "default_popup": "index.html",
+    "default_title": "Open DevLens",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -17,7 +16,7 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "permissions": ["storage", "contextMenus"],
+  "permissions": ["storage", "contextMenus", "sidePanel"],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'none'"
   },
@@ -28,12 +27,15 @@
   },
   "devtools_page": "devtools.html",
   "commands": {
-    "_execute_action": {
+    "open-side-panel": {
       "suggested_key": {
         "default": "Ctrl+Shift+L",
         "mac": "Command+Shift+L"
       },
-      "description": "Open DevLens"
+      "description": "Open the DevLens side panel"
     }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
   }
 }

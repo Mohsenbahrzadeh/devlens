@@ -23,7 +23,7 @@ if (!chromePath) {
   console.error('Chrome not found. Set CHROME_PATH to your Chrome/Chromium executable.');
   process.exit(1);
 }
-if (!existsSync(join(dist, 'index.html'))) {
+if (!existsSync(join(dist, 'sidepanel.html'))) {
   console.error('dist/ not found. Run `npm run build` first.');
   process.exit(1);
 }
@@ -38,7 +38,7 @@ const MIME = {
 const server = createServer((req, res) => {
   const path =
     normalize(decodeURIComponent((req.url ?? '/').split('?')[0])).replace(/^([/\\])+/, '') ||
-    'index.html';
+    'sidepanel.html';
   try {
     const data = readFileSync(join(dist, path));
     res.writeHead(200, { 'Content-Type': MIME[extname(path)] ?? 'application/octet-stream' });

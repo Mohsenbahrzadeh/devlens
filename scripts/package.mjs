@@ -34,7 +34,7 @@ try {
   process.exit(1);
 }
 const names = files.map((f) => relative(dist, f).split(sep).join(posix.sep));
-for (const required of ['manifest.json', 'index.html', 'background.js']) {
+for (const required of ['manifest.json', 'sidepanel.html', 'panel.html', 'background.js']) {
   if (!names.includes(required)) {
     console.error(`dist/${required} is missing; the build looks incomplete.`);
     process.exit(1);

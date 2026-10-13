@@ -20,7 +20,7 @@ CI runs the same commands and fails the PR if any of them fail.
 ## Guidelines
 
 - Keep business logic in small pure functions (`utils/`, `generators/`, `lib/`) and cover them with tests in `tests/`.
-- No backend, accounts, analytics or network requests. User input must never leave the popup or be persisted.
+- No backend, accounts, analytics or network requests. User input must never leave the extension pages or be persisted.
 - Never log user input, and never use `eval`, `new Function` or `dangerouslySetInnerHTML`.
 - Do not store tool input in `chrome.storage` or `localStorage`; only UI preferences are allowed.
 - Show errors in plain language (`Result<T>` + `ErrorMessage`); raw errors go behind "Details".

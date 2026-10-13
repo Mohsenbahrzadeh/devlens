@@ -4,7 +4,7 @@ import { Card } from '@/components/Card';
 import { CodeBlock, type Language } from '@/components/CodeBlock';
 import { CopyButton } from '@/components/CopyButton';
 import { EmptyState } from '@/components/ErrorMessage';
-import { Icon, Logo } from '@/components/Icon';
+import { Icon } from '@/components/Icon';
 import { Input } from '@/components/Input';
 import { JsonTree } from '@/components/JsonTree';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -18,7 +18,6 @@ import { generatePython } from '@/features/http/generators/python';
 import { findBearerToken, harToSpec } from '@/features/http/utils/har';
 import { reviewToken } from '@/features/jwt/utils/security';
 import { KNOWN_CLAIMS, decodeJwt, getTimeInfo } from '@/features/jwt/utils/token';
-import { useTheme } from '@/hooks/useTheme';
 import { CONVERTERS } from '@/features/json/utils/converters';
 import { parseJson } from '@/lib/json';
 import { ErrorMessage } from '@/components/ErrorMessage';
@@ -315,7 +314,6 @@ function Detail({ entry }: { entry: NetEntry }) {
 }
 
 export function Panel() {
-  useTheme();
   const [rows, setRows] = useState<Row[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [filter, setFilter] = useState('');
@@ -358,17 +356,8 @@ export function Panel() {
   const current = rows.find((r) => r.id === selected)?.entry;
 
   return (
-    <div className="flex h-screen flex-col gap-3 p-3">
+    <div className="flex h-full min-h-[420px] flex-col gap-3">
       <header className="flex flex-wrap items-center gap-3">
-        <span className="flex items-center gap-2">
-          <Logo size={24} />
-          <span className="text-base font-extrabold">
-            Dev
-            <span className="bg-gradient-to-r from-accent to-accent2 bg-clip-text text-transparent">
-              Lens
-            </span>
-          </span>
-        </span>
         <div className="relative min-w-[200px] flex-1">
           <Icon
             name="search"

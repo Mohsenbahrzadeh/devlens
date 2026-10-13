@@ -9,6 +9,9 @@ import { Tools } from '@/features/encoding/components/Tools';
 import { HttpTools } from '@/features/http/components/HttpTools';
 import { JwtDecoder } from '@/features/jwt/components/JwtDecoder';
 import { utf8ToBase64Url } from '@/lib/base64';
+import { useEffect } from 'react';
+import App from '@/app/App';
+import type { Route } from '@/app/routes';
 
 // Crypto and worker start-up can be slow on cold disks; the default 1s async timeout is too tight.
 configure({ asyncUtilTimeout: 15000 });
@@ -188,5 +191,53 @@ describe('v0.3 UI', () => {
     expect(text).toContain('token=REDACTED');
     expect(text).not.toContain('s3cr3t');
     expect(text).not.toContain('abc123');
+  });
+});
+
+let networkMounts = 0;
+function FakeNetwork() {
+  useEffect(() => {
+    networkMounts++;
+  }, []);
+  return <p>captured-requests</p>;
+}
+const EXTRA: Route[] = [
+  {
+    id: 'network',
+    label: 'Network',
+    icon: 'send',
+    component: FakeNetwork,
+    wide: true,
+    keepAlive: true,
+  },
+];
+
+describe('docked app shell', () => {
+  it('shows the standard tools with JWT first and no popup sizing', () => {
+    render(<App />);
+    const tabs = screen.getAllByRole('tab').map((t) => t.textContent?.trim());
+    expect(tabs.slice(0, 5)).toEqual(['JWT', 'JSON', 'Diff', 'HTTP', 'Tools']);
+    expect(screen.getByRole('tab', { name: 'JWT' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('adds extra tabs first and keeps their state while switching tabs', () => {
+    networkMounts = 0;
+    render(<App extraRoutes={EXTRA} />);
+    expect(screen.getAllByRole('tab')[0]).toHaveTextContent('Network');
+    expect(screen.getByText('captured-requests').closest('[hidden]')).toBeNull();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'JWT' }));
+    // Still mounted (so captured requests are not lost) but hidden.
+    expect(screen.getByText('captured-requests').closest('[hidden]')).not.toBeNull();
+    expect(screen.getByLabelText('JSON Web Token')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Network' }));
+    expect(screen.getByText('captured-requests').closest('[hidden]')).toBeNull();
+    expect(networkMounts).toBe(1);
+  });
+
+  it('exposes the footer author credit', () => {
+    render(<App />);
+    expect(screen.getByText('Mohsen Bahrzadeh')).toBeInTheDocument();
   });
 });

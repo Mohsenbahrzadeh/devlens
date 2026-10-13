@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Icon, Logo, type IconName } from '@/components/Icon';
 import { Tabs } from '@/components/Tabs';
 import { detectInput } from '@/features/encoding/utils/detect';
@@ -7,7 +7,7 @@ import { useTheme, type Theme } from '@/hooks/useTheme';
 import { clearSavedRequests, loadPrefs, savePref, takePendingSelection } from '@/lib/storage';
 import { About } from './About';
 import { Footer } from './Footer';
-import { routes } from './routes';
+import { routes as toolRoutes, type Route } from './routes';
 
 const THEMES: { id: Theme; label: string; icon: IconName }[] = [
   { id: 'system', label: 'System', icon: 'monitor' },
@@ -19,9 +19,19 @@ interface Seed {
   tool: string;
   sub?: string;
   text: string;
+  /** Changes for every selection, so a second selection re-opens the tool with the new text. */
+  nonce: number;
 }
 
-export default function App() {
+const NO_ROUTES: Route[] = [];
+
+interface AppProps {
+  /** Extra tabs shown before the standard tools (the DevTools workspace adds "Network"). */
+  extraRoutes?: Route[];
+}
+
+export default function App({ extraRoutes = NO_ROUTES }: AppProps) {
+  const routes = useMemo(() => [...extraRoutes, ...toolRoutes], [extraRoutes]);
   const [active, setActive] = useState(routes[0].id);
   const [theme, setTheme] = useTheme();
   const [showSettings, setShowSettings] = useState(false);
@@ -29,6 +39,24 @@ export default function App() {
   const [savedEnabled, setSavedEnabled] = useState(false);
   const [defaultTarget, setDefaultTarget] = useState<Target>('curl');
   const [cleared, setCleared] = useState(false);
+
+  const applySelection = useCallback((text: string) => {
+    const d = detectInput(text);
+    setActive(d.tool);
+    setSeed({ tool: d.tool, sub: 'sub' in d ? d.sub : undefined, text, nonce: Date.now() });
+  }, []);
+
+  // The side panel stays open, so a new right-click selection arrives while it is running.
+  useEffect(() => {
+    if (typeof chrome === 'undefined' || !chrome.storage?.onChanged) return;
+    const onChanged = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
+      if (area === 'session' && changes.pending?.newValue) {
+        void takePendingSelection().then((text) => text && applySelection(text));
+      }
+    };
+    chrome.storage.onChanged.addListener(onChanged);
+    return () => chrome.storage.onChanged.removeListener(onChanged);
+  }, [applySelection]);
 
   useEffect(() => {
     void (async () => {
@@ -40,20 +68,18 @@ export default function App() {
       }
       // Text selected on a page via the context menu (in-memory only, read once).
       const text = await takePendingSelection();
-      if (text) {
-        const d = detectInput(text);
-        setActive(d.tool);
-        setSeed({ tool: d.tool, sub: 'sub' in d ? d.sub : undefined, text });
-      }
+      if (text) applySelection(text);
     })();
-  }, []);
+  }, [routes, applySelection]);
 
   const change = (id: string) => {
     setActive(id);
     void savePref('tab', id);
   };
 
-  const Active = routes.find((r) => r.id === active)?.component ?? routes[0].component;
+  const activeRoute = routes.find((r) => r.id === active) ?? routes[0];
+  const Active = activeRoute.component;
+  const keepAlive = routes.filter((r) => r.keepAlive);
   const activeSeed = seed && seed.tool === active ? seed : null;
 
   return (
@@ -196,11 +222,21 @@ export default function App() {
         aria-labelledby={`tab-${active}`}
         className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-3"
       >
-        <Active
-          key={`${active}-${activeSeed ? 'seeded' : 'plain'}`}
-          seed={activeSeed?.text}
-          sub={activeSeed?.sub}
-        />
+        <div className={`mx-auto h-full w-full ${activeRoute.wide ? '' : 'max-w-3xl'}`}>
+          {/* Tabs that must keep their state (network capture) stay mounted but hidden. */}
+          {keepAlive.map((r) => (
+            <div key={r.id} hidden={r.id !== active} className="h-full">
+              <r.component />
+            </div>
+          ))}
+          {!activeRoute.keepAlive && (
+            <Active
+              key={`${active}-${activeSeed?.nonce ?? 'plain'}`}
+              seed={activeSeed?.text}
+              sub={activeSeed?.sub}
+            />
+          )}
+        </div>
       </main>
       <Footer />
     </div>

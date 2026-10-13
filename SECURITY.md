@@ -6,8 +6,8 @@ Please report suspected vulnerabilities privately through the repository's "Repo
 
 ## Security model
 
-- DevLens processes everything locally in the extension popup; it has no backend and its content security policy blocks all network connections (`connect-src 'none'`).
-- It requests only the `storage` and `contextMenus` permissions (preferences, optional saved requests, and the right-click menu). No host permissions are requested.
+- DevLens processes everything locally in the extension pages (side panel and DevTools); it has no backend and its content security policy blocks all network connections (`connect-src 'none'`).
+- It requests only the `storage`, `contextMenus` and `sidePanel` permissions (preferences, optional saved requests, the right-click menu, and the side panel). No host permissions are requested.
 - Tool inputs (JWTs, JSON, headers, bodies) are never persisted or logged.
 - JWT signatures are **not** verified. A decoded token is not proof of authenticity.
 - User-supplied strings are rendered through React only; `eval`, `new Function` and raw HTML injection are not used.

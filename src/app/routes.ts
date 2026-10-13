@@ -12,6 +12,10 @@ export interface Route {
   label: string;
   icon: IconName;
   component: ComponentType<ToolProps>;
+  /** Use the full width (e.g. the network inspector) instead of the centred column. */
+  wide?: boolean;
+  /** Stay mounted (hidden) while another tab is active, so captured state is not lost. */
+  keepAlive?: boolean;
 }
 
 /** Add a new tool by appending an entry here. Each module is independent. */

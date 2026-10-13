@@ -12,8 +12,8 @@ describe('manifest', () => {
     expect(manifest.version).toBe(pkg.version);
   });
 
-  it('requests only storage and contextMenus, and no host access', () => {
-    expect([...manifest.permissions].sort()).toEqual(['contextMenus', 'storage']);
+  it('requests only storage, contextMenus and sidePanel, and no host access', () => {
+    expect([...manifest.permissions].sort()).toEqual(['contextMenus', 'sidePanel', 'storage']);
     expect(manifest.host_permissions).toBeUndefined();
     expect(manifest.optional_host_permissions).toBeUndefined();
     expect(manifest.content_scripts).toBeUndefined();
@@ -27,11 +27,12 @@ describe('manifest', () => {
     expect(csp).not.toMatch(/unsafe-eval|unsafe-inline|https?:/);
   });
 
-  it('declares the popup, service worker, DevTools page and shortcut', () => {
-    expect(manifest.action.default_popup).toBe('index.html');
+  it('declares the side panel (no popup), service worker, DevTools page and shortcut', () => {
+    expect(manifest.side_panel.default_path).toBe('sidepanel.html');
+    expect(manifest.action.default_popup).toBeUndefined();
     expect(manifest.background.service_worker).toBe('background.js');
     expect(manifest.devtools_page).toBe('devtools.html');
-    expect(manifest.commands._execute_action.suggested_key.default).toBeTruthy();
+    expect(manifest.commands['open-side-panel'].suggested_key.default).toBeTruthy();
   });
 
   it('has the icons it references', () => {

@@ -65,7 +65,7 @@ export async function clearSavedRequests(): Promise<void> {
 
 /**
  * Text selected on a page via the context menu. It lives in in-memory session storage only
- * and is deleted as soon as the popup has read it.
+ * and is deleted as soon as the side panel has read it.
  */
 export async function takePendingSelection(): Promise<string | null> {
   try {

@@ -2,7 +2,7 @@
 
 A privacy-first developer toolbox for inspecting JWTs, JSON, HTTP requests and encoded data directly in your browser.
 
-DevLens is a Chrome extension (Manifest V3) that opens as a popup. Everything runs locally: no backend, no analytics, no network access.
+DevLens is a Chrome extension (Manifest V3) that docks next to your page (Chrome side panel) and inside DevTools. Everything runs locally: no backend, no analytics, no network access.
 
 ## Features
 
@@ -16,7 +16,7 @@ DevLens is a Chrome extension (Manifest V3) that opens as a popup. Everything ru
 | **DevTools**    | A "DevLens" panel in Chrome DevTools: browse API calls, decode Bearer tokens, copy any request as cURL / C# / fetch / Python.                                                                                                                                                                                                                                                                              |
 | **Right-click** | Select text on any page → "Inspect with DevLens" opens the matching tool (JWT, JSON, UUID, timestamp, query string, URL-encoded, Base64).                                                                                                                                                                                                                                                                  |
 
-Also: light / dark / system theme, Ctrl/Cmd + Enter to run the current action, **Ctrl+Shift+L** to open the popup, copy buttons everywhere, keyboard-navigable tabs, and status shown with text and icons rather than colour alone.
+Also: light / dark / system theme, Ctrl/Cmd + Enter to run the current action, **Ctrl+Shift+L** to open the side panel, copy buttons everywhere, keyboard-navigable tabs, and status shown with text and icons rather than colour alone.
 
 ## Screenshots
 
@@ -40,7 +40,7 @@ Then in Chrome: **Extensions → Developer mode → Load unpacked → select the
 ## Development
 
 ```bash
-npm run dev          # Vite dev server (renders the popup UI in a normal tab)
+npm run dev          # Vite dev server (renders the UI in a normal tab)
 npm run build        # type-check and produce dist/ (the unpacked extension)
 npm run typecheck    # tsc --noEmit
 npm run lint         # ESLint
@@ -78,11 +78,11 @@ Principles:
 
 ## Privacy
 
-- All processing happens in the popup; there is no backend and no external API.
-- The extension's CSP sets `connect-src 'none'`, so its pages cannot make network requests. Permissions are only `storage` and `contextMenus`, with no host access (a test enforces this). See [PRIVACY.md](PRIVACY.md).
-- Only UI preferences (theme, last tab, default output language) are written to `chrome.storage.local`. Tokens, JSON, headers, bodies, keys and secrets are held in React state only and disappear when the popup closes.
+- All processing happens in the extension pages (side panel / DevTools); there is no backend and no external API.
+- The extension's CSP sets `connect-src 'none'`, so its pages cannot make network requests. Permissions are only `storage`, `contextMenus` and `sidePanel`, with no host access (a test enforces this). See [PRIVACY.md](PRIVACY.md).
+- Only UI preferences (theme, last tab, default output language) are written to `chrome.storage.local`. Tokens, JSON, headers, bodies, keys and secrets are held in React state only and disappear when the side panel or DevTools window closes.
 - Optional saved requests are **off by default**; secret headers and token query parameters are always removed before saving.
-- Text selected through the right-click menu is passed through in-memory `chrome.storage.session` and deleted as soon as the popup reads it.
+- Text selected through the right-click menu is passed through in-memory `chrome.storage.session` and deleted as soon as the side panel reads it.
 
 ## Publishing to the Chrome Web Store
 

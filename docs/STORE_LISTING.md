@@ -72,8 +72,9 @@ Made by Mohsen Bahrzadeh.
 **Permission justifications:**
 
 - `storage` — Saves the theme, last selected tab and default output language, the optional (opt-in) saved
-  requests, and briefly passes text selected through the context menu to the popup via in-memory session storage.
+  requests, and briefly passes text selected through the context menu to the side panel via in-memory session storage.
 - `contextMenus` — Adds the "Inspect with DevLens" right-click item for selected text.
+- `sidePanel` — Shows DevLens in Chrome's side panel, docked next to the page, instead of a popup that closes when you click away.
 - Host permissions — none requested. No remote code is used.
 
 **Remote code:** No, I am not using remote code.

@@ -19,7 +19,7 @@ export default defineConfig({
     target: 'es2022',
     rollupOptions: {
       input: {
-        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        sidepanel: fileURLToPath(new URL('./sidepanel.html', import.meta.url)),
         panel: fileURLToPath(new URL('./panel.html', import.meta.url)),
         devtools: fileURLToPath(new URL('./devtools.html', import.meta.url)),
         background: fileURLToPath(new URL('./src/background.ts', import.meta.url)),

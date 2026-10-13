@@ -2,6 +2,18 @@
 
 All notable changes are documented here. This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-10-13
+
+### Changed
+
+- **DevLens is now docked instead of a popup.** Clicking the toolbar icon (or Ctrl+Shift+L) opens it in Chrome's **side panel**, which stays open while you work on the page. New permission: `sidePanel`.
+- **DevTools tab = the whole toolbox.** The "DevLens" DevTools tab (docked at the bottom, or wherever DevTools is docked) now contains JWT, JSON, Diff, HTTP and Tools in addition to the Network inspector. The Network tab keeps its captured requests while you switch tabs.
+- The right-click "Inspect with DevLens" entry opens the side panel, and works while it is already open.
+
+### Removed
+
+- The toolbar popup (replaced by the side panel).
+
 ## [0.3.0] - 2026-10-12
 
 ### Added

@@ -1,12 +1,12 @@
 # Privacy Policy
 
 **DevLens** is a developer tool made by Mohsen Bahrzadeh (<Mohsen.Bahrzadeh@Gmail.com>).
-_Last updated: 2026-10-02 · applies to version 0.2.0 and later._
+_Last updated: 2026-10-13 · applies to version 0.4.0 and later._
 
 ## Summary
 
 DevLens does not collect, transmit, sell or share any data. Everything you paste or type is processed
-locally, inside your browser, and is discarded when you close the popup.
+locally, inside your browser, and is discarded when you close the side panel or DevTools window.
 
 ## What DevLens processes
 
@@ -30,10 +30,10 @@ Stored with `chrome.storage.local`:
   time in Settings.
 
 Tool inputs (tokens, JSON, headers, bodies, keys and secrets) are **never** stored. They exist in memory only
-until the popup closes.
+until the side panel or DevTools window is closed or reloaded.
 
 Text selected through the right-click menu ("Inspect … with DevLens") is placed in the browser's in-memory
-`chrome.storage.session` so the popup can read it, and is deleted as soon as the popup has read it. It is never
+`chrome.storage.session` so the side panel can read it, and is deleted as soon as the side panel has read it. It is never
 written to disk.
 
 ## DevTools panel
@@ -44,10 +44,11 @@ sent anywhere.
 
 ## Permissions
 
-| Permission     | Why                                                                             |
-| -------------- | ------------------------------------------------------------------------------- |
-| `storage`      | Save preferences, the optional saved requests, and pass right-click selections. |
-| `contextMenus` | Add the "Inspect with DevLens" item to the right-click menu for selected text.  |
+| Permission     | Why                                                                              |
+| -------------- | -------------------------------------------------------------------------------- |
+| `storage`      | Save preferences, the optional saved requests, and pass right-click selections.  |
+| `contextMenus` | Add the "Inspect with DevLens" item to the right-click menu for selected text.   |
+| `sidePanel`    | Show DevLens in Chrome's side panel, docked next to the page you are working on. |
 
 DevLens requests no host permissions and injects no scripts into web pages.
 

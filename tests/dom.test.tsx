@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { xmlToJson } from '@/features/json/utils/xml';
 import { JsonViewer } from '@/features/json/components/JsonViewer';
@@ -9,6 +9,9 @@ import { Tools } from '@/features/encoding/components/Tools';
 import { HttpTools } from '@/features/http/components/HttpTools';
 import { JwtDecoder } from '@/features/jwt/components/JwtDecoder';
 import { utf8ToBase64Url } from '@/lib/base64';
+
+// Crypto and worker start-up can be slow on cold disks; the default 1s async timeout is too tight.
+configure({ asyncUtilTimeout: 15000 });
 
 afterEach(cleanup);
 
@@ -145,5 +148,45 @@ describe('Tools UI', () => {
     change('Pattern', '\\d+');
     change('Sample text', 'a1 b22');
     expect(screen.getByText('2 matches')).toBeInTheDocument();
+  });
+});
+
+describe('v0.3 UI', () => {
+  it('offers to repair broken JSON and applies the fix', () => {
+    render(<JsonViewer />);
+    const box = screen.getByLabelText('JSON') as HTMLTextAreaElement;
+    fireEvent.change(box, { target: { value: "{a: 1, 'b': [1,2,],}" } });
+    fireEvent.click(screen.getByRole('button', { name: 'Repair JSON' }));
+    expect(JSON.parse(box.value)).toEqual({ a: 1, b: [1, 2] });
+    expect(screen.getByText(/Repaired:/)).toBeInTheDocument();
+  });
+
+  it('verifies a GitHub webhook signature', async () => {
+    render(<Tools sub="webhook" />);
+    change('Raw payload', 'Hello, World!');
+    change('Signing secret', "It's a Secret to Everybody");
+    change(
+      'Signature header',
+      'sha256=757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Verify signature' }));
+    expect(await screen.findByText('Signature valid')).toBeInTheDocument();
+    change('Signing secret', 'wrong');
+    fireEvent.click(screen.getByRole('button', { name: 'Verify signature' }));
+    expect(await screen.findByText('Signature invalid')).toBeInTheDocument();
+  });
+
+  it('masks secrets in generated code when asked', () => {
+    render(<HttpTools />);
+    change('URL', 'https://api.example.com/x?token=abc123');
+    change('Header 1 name', 'Authorization');
+    change('Header 1 value', 'Bearer s3cr3t');
+    fireEvent.click(screen.getByLabelText(/Mask secrets/));
+    fireEvent.click(screen.getByRole('button', { name: 'Generate cURL' }));
+    const text = document.body.textContent ?? '';
+    expect(text).toContain('Bearer REDACTED');
+    expect(text).toContain('token=REDACTED');
+    expect(text).not.toContain('s3cr3t');
+    expect(text).not.toContain('abc123');
   });
 });

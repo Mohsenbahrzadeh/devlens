@@ -68,6 +68,7 @@ async function importVerifyKey(
   alg: string,
   key: string,
   opts: VerifyOptions,
+  kid?: string,
 ): Promise<Result<CryptoKey>> {
   const bits = alg.slice(2);
   const hash = HASH[bits];
@@ -105,6 +106,26 @@ async function importVerifyKey(
       return fail('Invalid JWK', 'The key looks like JSON but could not be parsed.');
     }
     if (!isObject(jwk)) return fail('Invalid JWK', 'A JWK must be a JSON object.');
+    if (Array.isArray(jwk.keys)) {
+      // A JWKS document: pick the key that matches the token's "kid".
+      const keys = jwk.keys.filter(isObject);
+      const ids = keys.map((k) => (typeof k.kid === 'string' ? k.kid : '(no kid)'));
+      const match =
+        kid !== undefined
+          ? keys.find((k) => k.kid === kid)
+          : keys.length === 1
+            ? keys[0]
+            : undefined;
+      if (!match) {
+        return fail(
+          'No matching key in the JWKS',
+          kid !== undefined
+            ? `The token's kid "${kid}" is not in the key set. Available: ${ids.join(', ') || 'none'}.`
+            : `The token has no "kid" and the key set has ${keys.length} keys. Available: ${ids.join(', ') || 'none'}.`,
+        );
+      }
+      jwk = match;
+    }
     if ('d' in jwk) {
       return fail(
         'Private key detected',
@@ -162,7 +183,12 @@ export async function verifyJwt(
   const data = new TextEncoder().encode(`${h}.${p}`);
 
   try {
-    const imported = await importVerifyKey(alg, key, opts);
+    const imported = await importVerifyKey(
+      alg,
+      key,
+      opts,
+      typeof decoded.value.header.kid === 'string' ? decoded.value.header.kid : undefined,
+    );
     if (!imported.ok) return imported;
     const bits = alg.slice(2);
     const params = alg.startsWith('HS')

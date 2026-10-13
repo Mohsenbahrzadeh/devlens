@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { ToolProps } from '@/app/seed';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
-import { CodeBlock, type Language } from '@/components/CodeBlock';
+import { CodeBlock } from '@/components/CodeBlock';
 import { CopyButton } from '@/components/CopyButton';
 import { EmptyState, ErrorMessage } from '@/components/ErrorMessage';
 import { Icon } from '@/components/Icon';
@@ -11,45 +11,18 @@ import { JsonTree } from '@/components/JsonTree';
 import { Tabs } from '@/components/Tabs';
 import { TextArea } from '@/components/TextArea';
 import { useCtrlEnter } from '@/hooks/useCtrlEnter';
-import { jsonToCSharpModels } from '@/features/http/generators/csharpClient';
-import { formatJson, minifyJson, parseJson, searchJson, type JsonValue } from '@/lib/json';
-import { ok, type AppError, type Result } from '@/types/result';
-import { jsonToCsv } from '../utils/csv';
+import { formatJson, minifyJson, parseJson, searchJson } from '@/lib/json';
+import type { AppError } from '@/types/result';
 import { queryJsonPath } from '../utils/jsonpath';
-import { toGo, toJava, toPydantic, toZod } from '../utils/schema';
-import { jsonToTypeScript } from '../utils/typescript';
-import { jsonToXml, xmlToJson } from '../utils/xml';
-import { toYaml } from '../utils/yaml';
+import { xmlToJson } from '../utils/xml';
+import { CONVERTERS as TARGETS } from '../utils/converters';
+import { repairJson } from '@/lib/repair';
 
 type View = 'tree' | 'query' | 'convert';
 const VIEWS = [
   { id: 'tree', label: 'Tree', icon: 'code' as const },
   { id: 'query', label: 'JSONPath', icon: 'search' as const },
   { id: 'convert', label: 'Convert', icon: 'sparkles' as const },
-];
-
-interface Target {
-  id: string;
-  label: string;
-  lang: Language;
-  run: (v: JsonValue) => Result<string>;
-}
-
-const TARGETS: Target[] = [
-  {
-    id: 'ts',
-    label: 'TypeScript interfaces',
-    lang: 'typescript',
-    run: (v) => ok(jsonToTypeScript(v)),
-  },
-  { id: 'zod', label: 'Zod schema', lang: 'typescript', run: (v) => ok(toZod(v)) },
-  { id: 'cs', label: 'C# records', lang: 'csharp', run: (v) => ok(jsonToCSharpModels(v)) },
-  { id: 'py', label: 'Python (Pydantic)', lang: 'python', run: (v) => ok(toPydantic(v)) },
-  { id: 'java', label: 'Java records', lang: 'java', run: (v) => ok(toJava(v)) },
-  { id: 'go', label: 'Go structs', lang: 'go', run: (v) => ok(toGo(v)) },
-  { id: 'yaml', label: 'YAML', lang: 'yaml', run: (v) => ok(toYaml(v)) },
-  { id: 'csv', label: 'CSV', lang: 'text', run: jsonToCsv },
-  { id: 'xml', label: 'XML', lang: 'xml', run: (v) => ok(jsonToXml(v)) },
 ];
 
 export function JsonViewer({ seed }: ToolProps) {
@@ -100,6 +73,18 @@ export function JsonViewer({ seed }: ToolProps) {
 
   const looksLikeXml = input.trimStart().startsWith('<');
 
+  const [repairNote, setRepairNote] = useState<string[] | null>(null);
+  const repair = useMemo(
+    () => (parsed && !parsed.ok && !looksLikeXml ? repairJson(input) : null),
+    [parsed, looksLikeXml, input],
+  );
+  const applyRepair = () => {
+    if (repair?.ok) {
+      setInput(JSON.stringify(JSON.parse(repair.value.json), null, 2));
+      setRepairNote(repair.value.fixes);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-3">
       <TextArea
@@ -110,6 +95,7 @@ export function JsonViewer({ seed }: ToolProps) {
         onChange={(e) => {
           setInput(e.target.value);
           setXmlError(null);
+          setRepairNote(null);
         }}
       />
       <div className="flex flex-wrap items-center gap-2">
@@ -140,6 +126,25 @@ export function JsonViewer({ seed }: ToolProps) {
 
       {xmlError && <ErrorMessage error={xmlError} />}
       {parsed && !parsed.ok && !looksLikeXml && <ErrorMessage error={parsed.error} />}
+      {repair?.ok && (
+        <div
+          role="status"
+          className="animate-rise flex flex-wrap items-center gap-2 rounded-xl border border-accent/30 bg-accent/10 p-2.5 text-xs"
+        >
+          <Icon name="sparkles" size={14} className="text-accent" />
+          <span className="min-w-0 flex-1">
+            This can be repaired automatically: {repair.value.fixes.join('; ') || 'minor fixes'}.
+          </span>
+          <Button variant="primary" onClick={applyRepair}>
+            Repair JSON
+          </Button>
+        </div>
+      )}
+      {repairNote && parsed?.ok && (
+        <p role="status" className="text-xs text-good">
+          ✓ Repaired: {repairNote.join('; ') || 'no changes needed'}.
+        </p>
+      )}
       {!parsed && (
         <EmptyState icon="code">Paste JSON above to browse, query and convert it.</EmptyState>
       )}

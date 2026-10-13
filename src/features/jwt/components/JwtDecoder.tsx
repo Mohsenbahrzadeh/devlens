@@ -47,7 +47,7 @@ function VerifyCard({ token, alg }: { token: string; alg: string }) {
           <b className="font-mono text-fg">{alg || '—'}</b>.{' '}
           {symmetric
             ? 'Enter the shared secret.'
-            : 'Paste the issuer’s PUBLIC key (PEM “BEGIN PUBLIC KEY”) or a JWK. Never paste a private key.'}
+            : 'Paste the issuer’s PUBLIC key (PEM “BEGIN PUBLIC KEY”), a JWK, or a whole JWKS (the key is picked by the token’s kid). Never paste a private key.'}
         </p>
         {symmetric ? (
           <Input
@@ -60,7 +60,7 @@ function VerifyCard({ token, alg }: { token: string; alg: string }) {
           />
         ) : (
           <TextArea
-            label="Public key (PEM or JWK)"
+            label="Public key (PEM, JWK or JWKS)"
             rows={4}
             placeholder={'-----BEGIN PUBLIC KEY-----\n...'}
             value={key}

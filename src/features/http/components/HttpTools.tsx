@@ -6,6 +6,7 @@ import { Icon } from '@/components/Icon';
 import { Input } from '@/components/Input';
 import { Tabs } from '@/components/Tabs';
 import { TextArea } from '@/components/TextArea';
+import { maskForSharing } from '@/features/collections/redact';
 import { SavedRequests } from '@/features/collections/SavedRequests';
 import { useCtrlEnter } from '@/hooks/useCtrlEnter';
 import { loadPrefs } from '@/lib/storage';
@@ -157,6 +158,8 @@ export function HttpTools() {
   const [sections, setSections] = useState<Section[]>([]);
   const [error, setError] = useState<AppError | null>(null);
   const [savedEnabled, setSavedEnabled] = useState(false);
+  const [mask, setMask] = useState(false);
+  const outgoing = (s: HttpRequestSpec) => (mask ? maskForSharing(s) : s);
 
   useEffect(() => {
     void loadPrefs().then((p) => {
@@ -188,7 +191,7 @@ export function HttpTools() {
       return;
     }
     if (t === 'csharpTyped') {
-      const r = generateTypedCSharp(built.spec, response);
+      const r = generateTypedCSharp(outgoing(built.spec), response);
       if (!r.ok) {
         setSections([]);
         setError(r.error);
@@ -200,7 +203,11 @@ export function HttpTools() {
     }
     setError(null);
     setSections([
-      { title: TARGETS[t].label, lang: TARGETS[t].lang, code: TARGETS[t].run(built.spec) },
+      {
+        title: TARGETS[t].label,
+        lang: TARGETS[t].lang,
+        code: TARGETS[t].run(outgoing(built.spec)),
+      },
     ]);
   };
   useCtrlEnter(() => generate());
@@ -479,6 +486,17 @@ export function HttpTools() {
           Ctrl/Cmd + Enter
         </kbd>
       </div>
+
+      <label className="flex cursor-pointer items-center gap-2 text-xs text-muted">
+        <input
+          type="checkbox"
+          className="accent-[rgb(var(--accent))]"
+          checked={mask}
+          onChange={(e) => setMask(e.target.checked)}
+        />
+        Mask secrets in the output (Authorization, cookies, tokens, passwords) — safe to paste into
+        a ticket
+      </label>
 
       {error && <ErrorMessage error={error} />}
       {sections.map((s) => (

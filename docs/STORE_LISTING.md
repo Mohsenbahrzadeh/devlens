@@ -22,11 +22,12 @@ DevLens is a fast, private toolbox for developers who work with APIs. Everything
 JWT
 • Decode header and payload with expiry / not-before status in your local timezone
 • Verify HS/RS/PS/ES signatures locally (paste a secret or a public key)
+• JWKS support: paste a whole key set, the right key is chosen by kid
 • Security review: alg "none", jku/x5u/jwk, missing exp, long-lived tokens …
 • Create HMAC-signed test tokens
 
 JSON
-• Format, minify, browse as a tree, search, JSONPath queries
+• Format, minify, browse as a tree, search, JSONPath queries, one-click repair of broken JSON
 • Convert to TypeScript, Zod, C# records, Python (Pydantic), Java records, Go structs, YAML, CSV and XML — and XML back to JSON
 • Structural JSON diff with identity matching for arrays, ignore rules, side-by-side view, Markdown/JSON reports
 
@@ -37,10 +38,10 @@ HTTP
 • Optional saved requests (off by default; secrets are stripped)
 
 DevTools panel
-• A "DevLens" tab in Chrome DevTools: inspect API calls, decode Bearer tokens, copy any request as cURL / C# / fetch / Python
+• A "DevLens" tab in Chrome DevTools: inspect API calls, decode Bearer tokens, copy any request as cURL / C# / fetch / Python (with optional secret masking), and generate typed models + a C# client from the real response
 
 Tools
-• Base64, URL encode/decode, query-string parser/builder, Unix timestamps, UUID inspector, UUID v4/v7 / ULID / random string generators, SHA/HMAC hashes, regex tester, HTTP status code reference
+• Base64, URL encode/decode, query-string parser/builder, Unix timestamps, UUID inspector, UUID v4/v7 / ULID / random string generators, SHA/HMAC hashes, webhook signature verifier (GitHub, Stripe, Slack, Shopify), regex tester, HTTP status code reference
 
 Extras
 • Right-click selected text → "Inspect with DevLens" opens the right tool automatically

@@ -2,6 +2,20 @@
 
 All notable changes are documented here. This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-10-12
+
+### Added
+
+- **JSON repair:** one click fixes trailing/missing commas, single or smart quotes, unquoted keys, comments, Markdown fences, Python/JS literals (`True`, `None`, `undefined`, `NaN`) and unclosed brackets.
+- **Mask secrets:** HTTP output and DevTools "Copy as" can mask Authorization, cookies, API keys, token query parameters and password-like body fields, so requests are safe to paste into tickets.
+- **DevTools "Models" tab:** generate a typed C# client and models, or TypeScript / Zod / Python / Java / Go / YAML / CSV / XML, from the _real_ response of a captured request.
+- **Webhook verifier:** GitHub, Stripe, Slack, Shopify and generic HMAC-SHA256 signatures, with replay-window and whitespace warnings.
+- **JWKS support:** paste a whole key set and the key is chosen by the token's `kid`.
+
+### Changed
+
+- JSON converters now live in one shared list used by both the JSON tab and the DevTools panel.
+
 ## [0.2.0] - 2026-10-02
 
 ### Added

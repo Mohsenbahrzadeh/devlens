@@ -9,7 +9,9 @@ import { Input } from '@/components/Input';
 import { JsonTree } from '@/components/JsonTree';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Tabs } from '@/components/Tabs';
+import { maskForSharing } from '@/features/collections/redact';
 import { generateCSharp } from '@/features/http/generators/csharp';
+import { generateTypedCSharp } from '@/features/http/generators/csharpClient';
 import { generateCurl } from '@/features/http/generators/curl';
 import { generateFetch } from '@/features/http/generators/fetch';
 import { generatePython } from '@/features/http/generators/python';
@@ -17,7 +19,9 @@ import { findBearerToken, harToSpec } from '@/features/http/utils/har';
 import { reviewToken } from '@/features/jwt/utils/security';
 import { KNOWN_CLAIMS, decodeJwt, getTimeInfo } from '@/features/jwt/utils/token';
 import { useTheme } from '@/hooks/useTheme';
+import { CONVERTERS } from '@/features/json/utils/converters';
 import { parseJson } from '@/lib/json';
+import { ErrorMessage } from '@/components/ErrorMessage';
 
 interface Header {
   name: string;
@@ -144,6 +148,75 @@ const GENERATORS: { id: string; label: string; lang: Language }[] = [
   { id: 'python', label: 'Python', lang: 'python' },
 ];
 
+function MaskToggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2 text-xs text-muted">
+      <input
+        type="checkbox"
+        className="accent-[rgb(var(--accent))]"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      Mask secrets (Authorization, cookies, tokens, passwords) — safe to paste into a ticket
+    </label>
+  );
+}
+
+const MODEL_TARGETS = [{ id: 'client', label: 'C# models + typed client + usage' }, ...CONVERTERS];
+
+function ModelsView({ response, spec }: { response: string; spec: ReturnType<typeof harToSpec> }) {
+  const [target, setTarget] = useState('client');
+  const parsed = useMemo(() => parseJson(response.slice(0, MAX_BODY)), [response]);
+  const output = useMemo(() => {
+    if (!parsed.ok) return null;
+    if (target === 'client') return generateTypedCSharp(spec, response);
+    const c = CONVERTERS.find((x) => x.id === target) ?? CONVERTERS[0];
+    const r = c.run(parsed.value);
+    return r.ok
+      ? ({ ok: true, value: [{ title: c.label, language: c.lang, code: r.value }] } as const)
+      : r;
+  }, [parsed, target, spec, response]);
+
+  if (!response) return <p className="text-xs text-muted">Waiting for the response body…</p>;
+  if (!parsed.ok) {
+    return (
+      <p className="text-xs text-muted">
+        This response is not JSON, so models cannot be generated. ({parsed.error.message})
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-[11px] text-muted">
+        Generated from the real response of this request, locally in DevTools.
+      </p>
+      <select
+        aria-label="Generate"
+        value={target}
+        onChange={(e) => setTarget(e.target.value)}
+        className="field font-semibold"
+      >
+        {MODEL_TARGETS.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.label}
+          </option>
+        ))}
+      </select>
+      {output && !output.ok && <ErrorMessage error={output.error} />}
+      {output?.ok &&
+        output.value.map((section) => (
+          <CodeBlock
+            key={section.title}
+            code={section.code}
+            language={section.language}
+            title={section.title}
+            maxHeight={420}
+          />
+        ))}
+    </div>
+  );
+}
+
 function Detail({ entry }: { entry: NetEntry }) {
   const [tab, setTab] = useState('request');
   const [gen, setGen] = useState('curl');
@@ -155,7 +228,9 @@ function Detail({ entry }: { entry: NetEntry }) {
     });
   }, [entry]);
 
-  const spec = useMemo(() => harToSpec(entry.request), [entry]);
+  const [mask, setMask] = useState(false);
+  const rawSpec = useMemo(() => harToSpec(entry.request), [entry]);
+  const spec = useMemo(() => (mask ? maskForSharing(rawSpec) : rawSpec), [mask, rawSpec]);
   const token = findBearerToken(entry.request.headers);
   const code = useMemo(() => {
     if (gen === 'csharp') return generateCSharp(spec);
@@ -168,6 +243,7 @@ function Detail({ entry }: { entry: NetEntry }) {
     { id: 'request', label: 'Request' },
     { id: 'response', label: 'Response' },
     ...(token ? [{ id: 'jwt', label: 'JWT' }] : []),
+    { id: 'models', label: 'Models' },
     { id: 'code', label: 'Copy as…' },
   ];
 
@@ -214,9 +290,16 @@ function Detail({ entry }: { entry: NetEntry }) {
         </div>
       )}
       {tab === 'jwt' && token && <JwtView token={token} />}
+      {tab === 'models' && (
+        <div className="flex flex-col gap-2">
+          <MaskToggle checked={mask} onChange={setMask} />
+          <ModelsView response={response ?? ''} spec={spec} />
+        </div>
+      )}
       {tab === 'code' && (
         <div className="flex flex-col gap-2">
           <Tabs tabs={GENERATORS} active={gen} onChange={setGen} label="Language" size="sm" />
+          <MaskToggle checked={mask} onChange={setMask} />
           <CodeBlock
             code={code}
             language={GENERATORS.find((g) => g.id === gen)?.lang ?? 'bash'}

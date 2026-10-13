@@ -5,6 +5,7 @@ import { Card } from '@/components/Card';
 import { CopyButton } from '@/components/CopyButton';
 import { EmptyState, ErrorMessage } from '@/components/ErrorMessage';
 import { Input } from '@/components/Input';
+import { StatusBadge } from '@/components/StatusBadge';
 import { Tabs } from '@/components/Tabs';
 import { TextArea } from '@/components/TextArea';
 import { useCtrlEnter } from '@/hooks/useCtrlEnter';
@@ -17,6 +18,12 @@ import { testRegex } from '../utils/regex';
 import { searchStatusCodes } from '../utils/statusCodes';
 import { convertTimestamp } from '../utils/timestamp';
 import { urlDecode, urlEncode } from '../utils/url';
+import {
+  WEBHOOK_PROVIDERS,
+  verifyWebhook,
+  type WebhookOutcome,
+  type WebhookProvider,
+} from '../utils/webhook';
 import { inspectUuid } from '../utils/uuid';
 
 interface TransformProps {
@@ -550,6 +557,101 @@ function StatusCodes() {
   );
 }
 
+function Webhook() {
+  const [provider, setProvider] = useState<WebhookProvider>('github');
+  const [payload, setPayload] = useState('');
+  const [secret, setSecret] = useState('');
+  const [signature, setSignature] = useState('');
+  const [timestamp, setTimestamp] = useState('');
+  const [outcome, setOutcome] = useState<WebhookOutcome | null>(null);
+  const [error, setError] = useState<AppError | null>(null);
+  const needsTimestamp = WEBHOOK_PROVIDERS.find((p) => p.id === provider)?.needsTimestamp ?? false;
+
+  const run = async () => {
+    const r = await verifyWebhook({ provider, payload, secret, signature, timestamp });
+    setOutcome(r.ok ? r.value : null);
+    setError(r.ok ? null : r.error);
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-xs text-muted">
+        Verify a webhook signature locally (HMAC-SHA256). Paste the <b>exact raw body</b>: any
+        change in whitespace changes the signature.
+      </p>
+      <select
+        aria-label="Provider"
+        value={provider}
+        onChange={(e) => setProvider(e.target.value as WebhookProvider)}
+        className="field font-semibold"
+      >
+        {WEBHOOK_PROVIDERS.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.label}
+          </option>
+        ))}
+      </select>
+      <TextArea
+        label="Raw payload"
+        rows={4}
+        value={payload}
+        onChange={(e) => setPayload(e.target.value)}
+      />
+      <Input
+        type="password"
+        aria-label="Signing secret"
+        autoComplete="off"
+        placeholder="Signing secret"
+        value={secret}
+        onChange={(e) => setSecret(e.target.value)}
+      />
+      <Input
+        aria-label="Signature header"
+        className="font-mono text-xs"
+        placeholder="Signature header value, e.g. sha256=757107ea…"
+        value={signature}
+        onChange={(e) => setSignature(e.target.value)}
+      />
+      {needsTimestamp && (
+        <Input
+          aria-label="Request timestamp"
+          className="font-mono text-xs"
+          placeholder="X-Slack-Request-Timestamp"
+          value={timestamp}
+          onChange={(e) => setTimestamp(e.target.value)}
+        />
+      )}
+      <div>
+        <Button variant="primary" icon="shield" onClick={() => void run()}>
+          Verify signature
+        </Button>
+      </div>
+      {error && <ErrorMessage error={error} />}
+      {outcome && (
+        <Card title="Result" icon="shield">
+          <div role="status" className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge tone={outcome.valid ? 'good' : 'bad'}>
+                {outcome.valid ? 'Signature valid' : 'Signature invalid'}
+              </StatusBadge>
+              <span className="text-xs">{outcome.message}</span>
+            </div>
+            {outcome.warnings.map((w) => (
+              <p key={w} className="text-xs text-warn">
+                ⚠ {w}
+              </p>
+            ))}
+            <dl className="divide-y divide-line">
+              <Row label="Computed" value={outcome.computed} />
+              <Row label="Received" value={outcome.expected} />
+            </dl>
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 const SUB_TABS = [
   { id: 'base64', label: 'Base64' },
   { id: 'url', label: 'URL' },
@@ -558,6 +660,7 @@ const SUB_TABS = [
   { id: 'uuid', label: 'UUID' },
   { id: 'generate', label: 'Generate' },
   { id: 'hash', label: 'Hash' },
+  { id: 'webhook', label: 'Webhook' },
   { id: 'regex', label: 'Regex' },
   { id: 'codes', label: 'Status codes' },
 ];
@@ -597,6 +700,7 @@ export function Tools({ seed, sub: initialSub }: ToolProps) {
         {sub === 'uuid' && <Uuid initial={initialSub === 'uuid' ? seed : ''} />}
         {sub === 'generate' && <Generate />}
         {sub === 'hash' && <Hash />}
+        {sub === 'webhook' && <Webhook />}
         {sub === 'regex' && <Regex />}
         {sub === 'codes' && <StatusCodes />}
       </div>

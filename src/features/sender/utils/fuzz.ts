@@ -53,6 +53,8 @@ export interface FuzzRow {
   error?: string;
   /** True when this response's (status, bodyLength) pair is the most common one in the batch so far. */
   baseline: boolean;
+  /** Vulnerability-indicator labels found in this response (see payloads.ts detectSignals). */
+  flags: string[];
 }
 
 /** Groups rows by (status, bodyLength) and marks the largest group as the "baseline" (likely uninteresting). */

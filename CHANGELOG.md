@@ -2,6 +2,26 @@
 
 All notable changes are documented here. This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] - 2026-10-15
+
+### Added
+
+- **Sender → Fuzz: attack presets.** Built-in, non-destructive probe sets for SQL injection
+  (error-based and time-based blind), XSS reflection, path traversal, command injection,
+  SSRF/open redirect and NoSQL injection, each with a hint on how to read the results.
+- **Vulnerability signal detection.** Every Fuzz response is scanned offline for known indicators
+  (database error messages, stack traces, `/etc/passwd` or `win.ini` contents, shell command
+  output, unescaped reflected payloads, evaluated template expressions) and flagged in a new
+  Flags column; flagged rows are highlighted.
+- **Sender → Discover.** Finds same-origin links from a start URL (page links, `sitemap.xml`,
+  `robots.txt`), capped by depth and page count, so you can review and choose which ones to send
+  to Fuzz — nothing is probed automatically.
+
+### Not added (by design)
+
+- No DDoS / flood capability of any kind, including for your own systems. Use the existing Rate
+  limit tool (a small, bounded burst) to find a throttling point instead.
+
 ## [0.6.0] - 2026-10-15
 
 ### Added

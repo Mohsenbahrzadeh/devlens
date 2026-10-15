@@ -25,7 +25,9 @@ import {
   parseWordlist,
   type FuzzRow,
 } from '../utils/fuzz';
+import { discoverUrls, type DiscoveredUrl } from '../utils/discover';
 import { sendRequest, type SentResponse } from '../utils/network';
+import { detectSignals, PAYLOAD_SETS } from '../utils/payloads';
 import { analyzeRateResults, runBatch, type RateRow } from '../utils/rateLimit';
 import {
   analyzeSecurityHeaders,
@@ -238,15 +240,16 @@ function SendPane() {
   );
 }
 
-function FuzzPane() {
+function FuzzPane({ seedUrl }: { seedUrl?: string }) {
   const [method, setMethod] = useState<HttpMethod>('GET');
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState(seedUrl ?? '');
   const [headers, setHeaders] = useState<HttpHeader[]>([{ name: '', value: '' }]);
   const [body, setBody] = useState('');
-  const [source, setSource] = useState<'list' | 'range'>('list');
+  const [source, setSource] = useState<'list' | 'range' | 'preset'>('list');
   const [wordlist, setWordlist] = useState('');
   const [rangeStart, setRangeStart] = useState('1');
   const [rangeEnd, setRangeEnd] = useState('20');
+  const [presetId, setPresetId] = useState(PAYLOAD_SETS[0].id);
   const [concurrency, setConcurrency] = useState(3);
   const [rows, setRows] = useState<FuzzRow[]>([]);
   const [error, setError] = useState<AppError | null>(null);
@@ -255,10 +258,13 @@ function FuzzPane() {
 
   const spec: HttpRequestSpec = { method, url, headers, body };
   const markers = countMarkers(spec);
+  const preset = PAYLOAD_SETS.find((p) => p.id === presetId) ?? PAYLOAD_SETS[0];
   const values =
     source === 'list'
       ? parseWordlist(wordlist)
-      : numericRange(Number(rangeStart), Number(rangeEnd));
+      : source === 'range'
+        ? numericRange(Number(rangeStart), Number(rangeEnd))
+        : preset.values;
 
   const run = async () => {
     if (markers === 0) {
@@ -293,6 +299,9 @@ function FuzzPane() {
               timeMs,
               bodyLength: r.value.bodyText.length,
               baseline: false,
+              flags: detectSignals(values[i], r.value.bodyText, r.value.headers).map(
+                (s) => s.label,
+              ),
             } satisfies FuzzRow)
           : ({
               value: values[i],
@@ -302,6 +311,7 @@ function FuzzPane() {
               bodyLength: 0,
               error: r.error.message,
               baseline: false,
+              flags: [],
             } satisfies FuzzRow);
       },
       controller.signal,
@@ -333,13 +343,14 @@ function FuzzPane() {
         tabs={[
           { id: 'list', label: 'Wordlist' },
           { id: 'range', label: 'Number range' },
+          { id: 'preset', label: 'Attack preset' },
         ]}
         active={source}
-        onChange={(v) => setSource(v as 'list' | 'range')}
+        onChange={(v) => setSource(v as 'list' | 'range' | 'preset')}
         label="Value source"
         size="sm"
       />
-      {source === 'list' ? (
+      {source === 'list' && (
         <TextArea
           label="Values (one per line)"
           rows={4}
@@ -347,7 +358,8 @@ function FuzzPane() {
           onChange={(e) => setWordlist(e.target.value)}
           placeholder={'1\n2\nadmin'}
         />
-      ) : (
+      )}
+      {source === 'range' && (
         <div className="flex items-center gap-2">
           <Input
             aria-label="Range start"
@@ -364,6 +376,23 @@ function FuzzPane() {
             onChange={(e) => setRangeEnd(e.target.value)}
             className="!w-24"
           />
+        </div>
+      )}
+      {source === 'preset' && (
+        <div className="flex flex-col gap-1.5">
+          <select
+            aria-label="Attack preset"
+            value={presetId}
+            onChange={(e) => setPresetId(e.target.value)}
+            className="field font-semibold"
+          >
+            {PAYLOAD_SETS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label} ({p.values.length})
+              </option>
+            ))}
+          </select>
+          <p className="text-[11px] text-muted">{preset.hint}</p>
         </div>
       )}
       <div className="flex flex-wrap items-center gap-2">
@@ -407,7 +436,7 @@ function FuzzPane() {
               text={rows
                 .map(
                   (r) =>
-                    `${r.value}\t${r.status}\t${r.bodyLength}\t${r.timeMs}ms${r.baseline ? '\tbaseline' : ''}`,
+                    `${r.value}\t${r.status}\t${r.bodyLength}\t${r.timeMs}ms${r.baseline ? '\tbaseline' : ''}${r.flags.length ? `\t${r.flags.join('; ')}` : ''}`,
                 )
                 .join('\n')}
               label="Copy CSV"
@@ -422,13 +451,14 @@ function FuzzPane() {
                   <th className="py-1 pr-2">Status</th>
                   <th className="py-1 pr-2">Length</th>
                   <th className="py-1 pr-2">Time</th>
+                  <th className="py-1 pr-2">Flags</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r, i) => (
                   <tr
                     key={i}
-                    className={`border-t border-line ${r.baseline ? 'text-muted' : 'font-semibold'}`}
+                    className={`border-t border-line ${r.flags.length > 0 ? 'bg-bad/10' : r.baseline ? 'text-muted' : 'font-semibold'}`}
                     title={r.error}
                   >
                     <td className="max-w-[160px] truncate py-1 pr-2 font-mono">{r.value}</td>
@@ -439,6 +469,7 @@ function FuzzPane() {
                     </td>
                     <td className="py-1 pr-2 font-mono">{r.bodyLength}</td>
                     <td className="py-1 pr-2 font-mono">{r.timeMs} ms</td>
+                    <td className="py-1 pr-2 text-bad">{r.flags.join(', ')}</td>
                   </tr>
                 ))}
               </tbody>
@@ -701,24 +732,168 @@ function SecurityHeadersPane() {
   );
 }
 
+const SOURCE_LABEL: Record<DiscoveredUrl['source'], string> = {
+  page: 'page',
+  sitemap: 'sitemap.xml',
+  robots: 'robots.txt',
+};
+
+function DiscoverPane({ onTestInFuzz }: { onTestInFuzz: (url: string) => void }) {
+  const [start, setStart] = useState('');
+  const [maxDepth, setMaxDepth] = useState(2);
+  const [maxPages, setMaxPages] = useState(50);
+  const [urls, setUrls] = useState<DiscoveredUrl[] | null>(null);
+  const [error, setError] = useState<AppError | null>(null);
+  const [running, setRunning] = useState(false);
+
+  const run = async () => {
+    let base: URL;
+    try {
+      base = new URL(start);
+    } catch {
+      setError({
+        title: 'Invalid URL',
+        message: 'Enter a full URL, including the scheme (https://…).',
+      });
+      return;
+    }
+    setError(null);
+    setUrls(null);
+    setRunning(true);
+    const fetchText = async (u: string): Promise<string | null> => {
+      const r = await sendRequest({ method: 'GET', url: u, headers: [], body: '' });
+      return r.ok && r.value.status < 400 ? r.value.bodyText : null;
+    };
+    const found = await discoverUrls(
+      base.href,
+      Math.max(0, Math.min(5, maxDepth)),
+      Math.max(1, Math.min(200, maxPages)),
+      fetchText,
+    );
+    setUrls(found);
+    setRunning(false);
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-xs text-muted">
+        Finds same-origin links starting from one URL (page links,{' '}
+        <code className="rounded bg-surface2 px-1 font-mono">sitemap.xml</code>,{' '}
+        <code className="rounded bg-surface2 px-1 font-mono">robots.txt</code>), so you can pick
+        which ones to test in Fuzz — nothing is probed automatically.
+      </p>
+      <Input
+        aria-label="Start URL"
+        placeholder="https://api.example.com/"
+        value={start}
+        onChange={(e) => setStart(e.target.value)}
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-1.5 text-xs text-muted">
+          Depth
+          <Input
+            aria-label="Crawl depth"
+            type="number"
+            min={0}
+            max={5}
+            value={maxDepth}
+            onChange={(e) => setMaxDepth(Number(e.target.value))}
+            className="!w-16"
+          />
+        </label>
+        <label className="flex items-center gap-1.5 text-xs text-muted">
+          Max pages
+          <Input
+            aria-label="Max pages"
+            type="number"
+            min={1}
+            max={200}
+            value={maxPages}
+            onChange={(e) => setMaxPages(Number(e.target.value))}
+            className="!w-20"
+          />
+        </label>
+        <Button
+          variant="primary"
+          icon="search"
+          onClick={() => void run()}
+          disabled={running}
+          className="ml-auto"
+        >
+          {running ? 'Discovering…' : 'Discover'}
+        </Button>
+      </div>
+      {error && <ErrorMessage error={error} />}
+      {!urls && !running && (
+        <EmptyState icon="search">
+          Enter a URL and press Discover to find its other pages.
+        </EmptyState>
+      )}
+      {urls && (
+        <Card
+          title={`${urls.length} URL${urls.length === 1 ? '' : 's'} found`}
+          icon="search"
+          actions={<CopyButton text={urls.map((u) => u.url).join('\n')} label="Copy all" />}
+        >
+          <div className="max-h-96 overflow-auto">
+            <ul className="flex flex-col gap-1">
+              {urls.map((u, i) => (
+                <li
+                  key={i}
+                  className="flex items-center gap-2 rounded-lg border border-line bg-surface2/50 px-2 py-1"
+                >
+                  <span className="shrink-0 rounded-full bg-surface2 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                    {SOURCE_LABEL[u.source]}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate font-mono text-xs" title={u.url}>
+                    {u.url}
+                  </span>
+                  <Button className="!px-2 !py-0.5 text-xs" onClick={() => onTestInFuzz(u.url)}>
+                    Test in Fuzz
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          {urls.length >= Math.min(maxPages, 200) && (
+            <p className="mt-2 text-[11px] text-muted">
+              Stopped at the page limit; raise it to find more.
+            </p>
+          )}
+        </Card>
+      )}
+    </div>
+  );
+}
+
 const SUB_TABS = [
   { id: 'send', label: 'Send', icon: 'send' as const },
   { id: 'fuzz', label: 'Fuzz', icon: 'sparkles' as const },
   { id: 'rate', label: 'Rate limit', icon: 'clock' as const },
   { id: 'headers', label: 'Security headers', icon: 'shield' as const },
+  { id: 'discover', label: 'Discover', icon: 'search' as const },
 ];
 
 export function Sender() {
   const [sub, setSub] = useState('send');
+  const [fuzzSeed, setFuzzSeed] = useState<{ url: string; nonce: number } | undefined>(undefined);
   return (
     <AuthorizationGate>
       <div className="flex flex-col gap-3">
         <Tabs tabs={SUB_TABS} active={sub} onChange={setSub} label="Sender tools" size="sm" />
         <div role="tabpanel" id={`panel-${sub}`} aria-labelledby={`tab-${sub}`}>
           {sub === 'send' && <SendPane />}
-          {sub === 'fuzz' && <FuzzPane />}
+          {sub === 'fuzz' && <FuzzPane key={fuzzSeed?.nonce ?? 'plain'} seedUrl={fuzzSeed?.url} />}
           {sub === 'rate' && <RateLimitPane />}
           {sub === 'headers' && <SecurityHeadersPane />}
+          {sub === 'discover' && (
+            <DiscoverPane
+              onTestInFuzz={(url) => {
+                setFuzzSeed({ url, nonce: Date.now() });
+                setSub('fuzz');
+              }}
+            />
+          )}
         </div>
       </div>
     </AuthorizationGate>

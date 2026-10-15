@@ -140,17 +140,17 @@ describe('fuzz utilities', () => {
   });
   it('marks the most common (status, length) pair as the baseline', () => {
     const rows: FuzzRow[] = [
-      { value: '1', status: 200, ok: true, timeMs: 1, bodyLength: 50, baseline: false },
-      { value: '2', status: 200, ok: true, timeMs: 1, bodyLength: 50, baseline: false },
-      { value: '3', status: 404, ok: false, timeMs: 1, bodyLength: 10, baseline: false },
+      { value: '1', status: 200, ok: true, timeMs: 1, bodyLength: 50, baseline: false, flags: [] },
+      { value: '2', status: 200, ok: true, timeMs: 1, bodyLength: 50, baseline: false, flags: [] },
+      { value: '3', status: 404, ok: false, timeMs: 1, bodyLength: 10, baseline: false, flags: [] },
     ];
     const marked = markBaseline(rows);
     expect(marked.filter((r) => r.baseline).map((r) => r.value)).toEqual(['1', '2']);
   });
   it('marks nothing as baseline when every result is unique', () => {
     const rows: FuzzRow[] = [
-      { value: '1', status: 200, ok: true, timeMs: 1, bodyLength: 50, baseline: false },
-      { value: '2', status: 201, ok: true, timeMs: 1, bodyLength: 60, baseline: false },
+      { value: '1', status: 200, ok: true, timeMs: 1, bodyLength: 50, baseline: false, flags: [] },
+      { value: '2', status: 201, ok: true, timeMs: 1, bodyLength: 60, baseline: false, flags: [] },
     ];
     expect(markBaseline(rows).some((r) => r.baseline)).toBe(false);
   });

@@ -2,6 +2,19 @@
 
 All notable changes are documented here. This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-10-15
+
+### Added
+
+- **Journey tab in the DevTools Network inspector:** for any captured request, see the path it took and how it ended.
+  - Final status with a plain-language diagnosis (401, 429, 502/504, failed requests with the Chrome error such as `net::ERR_NAME_NOT_RESOLVED`, slow phases).
+  - Connection: server IP, HTTP/1.1 / 2 / 3, TLS or not, new or reused connection, served from cache.
+  - Timing waterfall: queued, stalled, DNS, TCP, TLS, request, waiting (TTFB), download.
+  - Redirect chain and CORS preflight, rebuilt from the captured requests.
+  - CDNs, proxies and gateways **inferred from response headers** (Cloudflare, CloudFront, Fastly, Akamai, Vercel, Envoy, Varnish, Via hops, web server, framework), plus cache hit/miss, W3C trace ids, correlation ids and Server-Timing.
+  - "Copy report" produces a Markdown summary for tickets (honours the mask-secrets switch).
+  - Limits are stated in the UI: no raw packets and no router hops (traceroute is not possible from a browser extension).
+
 ## [0.4.0] - 2026-10-13
 
 ### Changed

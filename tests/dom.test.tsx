@@ -12,6 +12,8 @@ import { utf8ToBase64Url } from '@/lib/base64';
 import { useEffect } from 'react';
 import App from '@/app/App';
 import type { Route } from '@/app/routes';
+import { JourneyView } from '@/panel/Journey';
+import type { JourneyEntry } from '@/features/http/utils/journey';
 
 // Crypto and worker start-up can be slow on cold disks; the default 1s async timeout is too tight.
 configure({ asyncUtilTimeout: 15000 });
@@ -239,5 +241,83 @@ describe('docked app shell', () => {
   it('exposes the footer author credit', () => {
     render(<App />);
     expect(screen.getByText('Mohsen Bahrzadeh')).toBeInTheDocument();
+  });
+});
+
+describe('Journey view', () => {
+  const T = Date.UTC(2026, 9, 13, 12, 0, 0);
+  const mk = (
+    over: Partial<JourneyEntry>,
+    status: number,
+    url: string,
+    at: number,
+    headers: [string, string][] = [],
+  ): JourneyEntry => ({
+    startedDateTime: new Date(T + at).toISOString(),
+    time: 200,
+    request: { method: 'GET', url, httpVersion: 'h2', headers: [] },
+    response: {
+      status,
+      statusText: '',
+      httpVersion: 'h2',
+      headers: headers.map(([name, value]) => ({ name, value })),
+    },
+    ...over,
+  });
+  const redirect = mk({}, 301, 'http://api.example.com/orders?token=abc123', 0, [
+    ['Location', 'https://api.example.com/orders?token=abc123'],
+  ]);
+  const final = mk(
+    {
+      serverIPAddress: '203.0.113.7',
+      timings: { dns: 10, connect: 40, ssl: 25, send: 1, wait: 120, receive: 8 },
+    },
+    200,
+    'https://api.example.com/orders?token=abc123',
+    100,
+    [
+      ['CF-Ray', 'x-FRA'],
+      ['Server-Timing', 'db;dur=53'],
+      ['X-Request-Id', 'req-9'],
+    ],
+  );
+
+  it('shows status, path, redirects, timing, intermediaries and correlation ids', () => {
+    render(<JourneyView entry={final} all={[redirect, final]} mask={false} hasBearer={false} />);
+    const text = document.body.textContent ?? '';
+    expect(text).toContain('200 OK');
+    expect(text).toContain('Connected to 203.0.113.7');
+    expect(text).toContain('HTTP/2 over TLS');
+    expect(text).toContain('Redirects (2 requests)');
+    expect(text).toContain('Cloudflare');
+    expect(text).toContain('edge location FRA');
+    expect(text).toContain('TLS handshake');
+    expect(text).toContain('req-9');
+    expect(text).toContain('db');
+    expect(text).toContain('cannot see raw packets');
+    expect(
+      screen.getByRole('img', { name: /Timing breakdown, 179 milliseconds/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('masks token query parameters when asked', () => {
+    render(<JourneyView entry={final} all={[redirect, final]} mask hasBearer={false} />);
+    const text = document.body.textContent ?? '';
+    expect(text).toContain('token=REDACTED');
+    expect(text).not.toContain('abc123');
+  });
+
+  it('explains a failed request', () => {
+    const failed = mk({ _error: 'net::ERR_CONNECTION_REFUSED' }, 0, 'https://localhost:9/x', 0);
+    render(<JourneyView entry={failed} all={[failed]} mask={false} hasBearer={false} />);
+    const text = document.body.textContent ?? '';
+    expect(text).toContain('Connection refused');
+    expect(text).toContain('net::ERR_CONNECTION_REFUSED');
+  });
+
+  it('points an unauthorized request with a bearer token to the JWT tab', () => {
+    const e = mk({}, 401, 'https://api.example.com/me', 0, [['WWW-Authenticate', 'Bearer']]);
+    render(<JourneyView entry={e} all={[e]} mask={false} hasBearer />);
+    expect(document.body.textContent).toContain('Decode it in the JWT tab');
   });
 });

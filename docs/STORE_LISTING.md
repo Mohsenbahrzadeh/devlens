@@ -38,7 +38,8 @@ HTTP
 • Optional saved requests (off by default; secrets are stripped)
 
 DevTools panel
-• A "DevLens" tab in Chrome DevTools: inspect API calls, decode Bearer tokens, copy any request as cURL / C# / fetch / Python (with optional secret masking), and generate typed models + a C# client from the real response
+• A "DevLens" tab in Chrome DevTools: inspect API calls, decode Bearer tokens, copy any request as cURL / C# / fetch / Python (optional secret masking), and generate typed models + a C# client from the real response
+• Journey view per request: final status with diagnosis, timing waterfall, redirect chain, CORS preflight, connection details and CDN/proxy hints inferred from response headers
 
 Tools
 • Base64, URL encode/decode, query-string parser/builder, Unix timestamps, UUID inspector, UUID v4/v7 / ULID / random string generators, SHA/HMAC hashes, webhook signature verifier (GitHub, Stripe, Slack, Shopify), regex tester, HTTP status code reference

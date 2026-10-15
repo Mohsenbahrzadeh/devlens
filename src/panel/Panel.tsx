@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ErrorMessage';
 import { Icon } from '@/components/Icon';
 import { Input } from '@/components/Input';
 import { JsonTree } from '@/components/JsonTree';
+import { JourneyView } from './Journey';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Tabs } from '@/components/Tabs';
 import { maskForSharing } from '@/features/collections/redact';
@@ -16,6 +17,7 @@ import { generateCurl } from '@/features/http/generators/curl';
 import { generateFetch } from '@/features/http/generators/fetch';
 import { generatePython } from '@/features/http/generators/python';
 import { findBearerToken, harToSpec } from '@/features/http/utils/har';
+import type { HarTimings, JourneyEntry } from '@/features/http/utils/journey';
 import { reviewToken } from '@/features/jwt/utils/security';
 import { KNOWN_CLAIMS, decodeJwt, getTimeInfo } from '@/features/jwt/utils/token';
 import { CONVERTERS } from '@/features/json/utils/converters';
@@ -31,16 +33,26 @@ interface Header {
 interface NetEntry {
   startedDateTime: string;
   time: number;
+  serverIPAddress?: string;
+  connection?: string;
+  timings?: HarTimings;
   _resourceType?: string;
+  _fromCache?: string;
+  _error?: string;
+  _initiator?: JourneyEntry['_initiator'];
   request: {
     method: string;
     url: string;
+    httpVersion?: string;
     headers: Header[];
     postData?: { mimeType?: string; text?: string };
   };
   response: {
     status: number;
     statusText: string;
+    httpVersion?: string;
+    redirectURL?: string;
+    _error?: string;
     headers: Header[];
     content: { mimeType?: string; size?: number };
   };
@@ -216,7 +228,7 @@ function ModelsView({ response, spec }: { response: string; spec: ReturnType<typ
   );
 }
 
-function Detail({ entry }: { entry: NetEntry }) {
+function Detail({ entry, all }: { entry: NetEntry; all: NetEntry[] }) {
   const [tab, setTab] = useState('request');
   const [gen, setGen] = useState('curl');
   const [response, setResponse] = useState<string | null>(null);
@@ -241,6 +253,7 @@ function Detail({ entry }: { entry: NetEntry }) {
   const tabs = [
     { id: 'request', label: 'Request' },
     { id: 'response', label: 'Response' },
+    { id: 'journey', label: 'Journey' },
     ...(token ? [{ id: 'jwt', label: 'JWT' }] : []),
     { id: 'models', label: 'Models' },
     { id: 'code', label: 'Copy as…' },
@@ -256,7 +269,7 @@ function Detail({ entry }: { entry: NetEntry }) {
           </StatusBadge>
           <span className="text-xs text-muted">{Math.round(entry.time)} ms</span>
         </div>
-        <p className="mt-1 break-all font-mono text-xs">{entry.request.url}</p>
+        <p className="mt-1 break-all font-mono text-xs">{spec.url}</p>
       </div>
       <Tabs tabs={tabs} active={tab} onChange={setTab} label="Request details" size="sm" />
       {tab === 'request' && (
@@ -289,6 +302,12 @@ function Detail({ entry }: { entry: NetEntry }) {
         </div>
       )}
       {tab === 'jwt' && token && <JwtView token={token} />}
+      {tab === 'journey' && (
+        <div className="flex flex-col gap-2">
+          <MaskToggle checked={mask} onChange={setMask} />
+          <JourneyView entry={entry} all={all} mask={mask} hasBearer={token !== null} />
+        </div>
+      )}
       {tab === 'models' && (
         <div className="flex flex-col gap-2">
           <MaskToggle checked={mask} onChange={setMask} />
@@ -354,6 +373,7 @@ export function Panel() {
   }, [rows, filter, apiOnly]);
 
   const current = rows.find((r) => r.id === selected)?.entry;
+  const allEntries = useMemo(() => rows.map((r) => r.entry), [rows]);
 
   return (
     <div className="flex h-full min-h-[420px] flex-col gap-3">
@@ -451,7 +471,7 @@ export function Panel() {
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {current ? (
-            <Detail key={selected} entry={current} />
+            <Detail key={selected} entry={current} all={allEntries} />
           ) : (
             <EmptyState icon="search">
               Select a request to inspect it, decode its JWT or copy it as code.

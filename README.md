@@ -2,7 +2,7 @@
 
 A privacy-first developer toolbox for inspecting JWTs, JSON, HTTP requests and encoded data directly in your browser.
 
-DevLens is a Chrome extension (Manifest V3) that docks next to your page (Chrome side panel) and inside DevTools. Everything runs locally: no backend, no analytics, no network access.
+DevLens is a Chrome extension (Manifest V3) that docks next to your page (Chrome side panel) and inside DevTools. Every tool except **Sender** runs fully locally: no backend, no analytics, no network access. Sender is an explicit, opt-in tool for testing APIs you own or are authorized to test; see [Privacy](#privacy).
 
 ## Features
 
@@ -15,6 +15,7 @@ DevLens is a Chrome extension (Manifest V3) that docks next to your page (Chrome
 | **Tools**       | Base64, URL encode/decode, query-string parser & builder, Unix timestamps, UUID inspector, **UUID v4/v7 / ULID / random string generator**, **SHA & HMAC hashes**, **regex tester**, **HTTP status code reference**.                                                                                                                                                                                                                                                                                                               |
 | **DevTools**    | A "DevLens" tab in Chrome DevTools with the whole toolbox plus a **Network** inspector: decode Bearer tokens, copy any request as cURL / C# / fetch / Python (optionally with secrets masked), generate **typed models and a C# client from the real response**, and open a per-request **Journey**: final status with a plain-language diagnosis, connection (IP, protocol, TLS), timing waterfall, redirect chain, CORS preflight, and CDN / proxy hops _inferred from headers_ (DevLens cannot see raw packets or router hops). |
 | **Right-click** | Select text on any page → "Inspect with DevLens" opens the matching tool (JWT, JSON, UUID, timestamp, query string, URL-encoded, Base64).                                                                                                                                                                                                                                                                                                                                                                                          |
+| **Sender**      | For APIs/systems you own or are authorized to test (gated behind a one-time authorization notice): **Send** a real request and see the response; **Fuzz** a `{{FUZZ}}` placeholder with a wordlist or number range; **Rate limit** a burst of requests to find the throttling point; **Security headers** audit (CSP, HSTS, cookie flags, CORS, …). The only tool that sends real network traffic.                                                                                                                                 |
 
 Also: light / dark / system theme, Ctrl/Cmd + Enter to run the current action, **Ctrl+Shift+L** to open the side panel, copy buttons everywhere, keyboard-navigable tabs, and status shown with text and icons rather than colour alone.
 

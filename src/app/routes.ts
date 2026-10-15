@@ -5,6 +5,7 @@ import { Tools } from '@/features/encoding/components/Tools';
 import { HttpTools } from '@/features/http/components/HttpTools';
 import { JwtDecoder } from '@/features/jwt/components/JwtDecoder';
 import { JsonViewer } from '@/features/json/components/JsonViewer';
+import { Sender } from '@/features/sender/components/Sender';
 import type { ToolProps } from './seed';
 
 export interface Route {
@@ -25,4 +26,5 @@ export const routes: Route[] = [
   { id: 'diff', label: 'Diff', icon: 'diff', component: JsonDiff },
   { id: 'http', label: 'HTTP', icon: 'send', component: HttpTools },
   { id: 'tools', label: 'Tools', icon: 'tool', component: Tools },
+  { id: 'sender', label: 'Sender', icon: 'shield', component: Sender },
 ];

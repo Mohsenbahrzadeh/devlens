@@ -2,6 +2,27 @@
 
 All notable changes are documented here. This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-10-15
+
+### Added
+
+- **Sender tab:** a new tool for testing APIs and systems you own or are explicitly authorized to test. Gated
+  behind a one-time, per-session authorization notice.
+  - **Send:** build and send a real request, see status, headers, timing and body.
+  - **Fuzz:** put `{{FUZZ}}` anywhere in the URL, a header or the body; send one request per value from a
+    wordlist or a numeric range, with bounded concurrency. Results are grouped by (status, body length) so the
+    common "nothing here" response is greyed out and the interesting rows stand out.
+  - **Rate limit:** send a burst of identical requests and see when (if ever) the server starts throttling —
+    first 429, `Retry-After`, median/p95 latency.
+  - **Security headers:** audits a response the way securityheaders.com does (CSP, HSTS, X-Frame-Options,
+    Referrer-Policy, cookie flags, dangerous CORS wildcard + credentials, …), entirely offline from headers you
+    already have.
+
+### Changed
+
+- **New permission: `host_permissions: ["<all_urls>"]`.** Every other tool is still fully offline; only the
+  Sender tab makes real outbound requests, straight from your browser to the URL you give it. See PRIVACY.md.
+
 ## [0.5.0] - 2026-10-15
 
 ### Added

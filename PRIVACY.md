@@ -1,12 +1,14 @@
 # Privacy Policy
 
 **DevLens** is a developer tool made by Mohsen Bahrzadeh (<Mohsen.Bahrzadeh@Gmail.com>).
-_Last updated: 2026-10-13 · applies to version 0.4.0 and later._
+_Last updated: 2026-10-15 · applies to version 0.6.0 and later._
 
 ## Summary
 
-DevLens does not collect, transmit, sell or share any data. Everything you paste or type is processed
-locally, inside your browser, and is discarded when you close the side panel or DevTools window.
+DevLens itself does not collect, transmit, sell or share any data to us or anyone else. Everything you paste
+or type is processed locally, inside your browser, and is discarded when you close the side panel or DevTools
+window. **One tool, Sender, is the exception: when you use it, it sends real network requests — directly from
+your browser to the server you point it at, never through us.** Every other tool stays fully offline.
 
 ## What DevLens processes
 
@@ -16,8 +18,16 @@ only. DevLens has no server, no account system, no analytics, no advertising and
 
 ## Network access
 
-The extension's content security policy sets `connect-src 'none'`, so its pages cannot make network requests.
-DevLens works fully offline. It does not download or run remote code.
+Every tool except Sender cannot make network requests; DevLens works fully offline for them. It never
+downloads or runs remote code.
+
+**Sender** (for testing APIs and systems you own or are authorized to test) sends real HTTP requests —
+including repeated requests when you use Fuzz, and bursts of requests when you use Rate limit — directly from
+your browser to the URL you give it, with the method, headers and body you give it. Nothing is routed through
+DevLens's authors or any third party; the request goes straight from your browser to that server, the same as
+if you typed the URL into the address bar. Because of this, DevLens has the `<all_urls>` host permission,
+which Chrome shows you at install time. Sender requires a one-time, per-browser-session acknowledgement before
+it will send anything, and is a separate tab from the rest of DevLens so it is never used by accident.
 
 ## What is stored on your device
 
@@ -44,13 +54,15 @@ sent anywhere.
 
 ## Permissions
 
-| Permission     | Why                                                                              |
-| -------------- | -------------------------------------------------------------------------------- |
-| `storage`      | Save preferences, the optional saved requests, and pass right-click selections.  |
-| `contextMenus` | Add the "Inspect with DevLens" item to the right-click menu for selected text.   |
-| `sidePanel`    | Show DevLens in Chrome's side panel, docked next to the page you are working on. |
+| Permission     | Why                                                                                    |
+| -------------- | -------------------------------------------------------------------------------------- |
+| `storage`      | Save preferences, the optional saved requests, and pass right-click selections.        |
+| `contextMenus` | Add the "Inspect with DevLens" item to the right-click menu for selected text.         |
+| `sidePanel`    | Show DevLens in Chrome's side panel, docked next to the page you are working on.       |
+| `<all_urls>`   | Lets the **Sender** tab send requests to the URL you give it. No other tool uses this. |
 
-DevLens requests no host permissions and injects no scripts into web pages.
+DevLens injects no scripts into web pages and reads no content from pages you browse; the host permission is
+used only to let the Sender tab's own requests leave the browser.
 
 ## Children
 

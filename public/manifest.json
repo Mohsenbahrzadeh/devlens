@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DevLens",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A privacy-first developer toolbox for inspecting JWTs, JSON, HTTP requests and encoded data.",
   "action": {
     "default_title": "Open DevLens",
@@ -17,8 +17,9 @@
     "128": "icons/icon128.png"
   },
   "permissions": ["storage", "contextMenus", "sidePanel"],
+  "host_permissions": ["<all_urls>"],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'none'"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src https: http:"
   },
   "minimum_chrome_version": "127",
   "background": {

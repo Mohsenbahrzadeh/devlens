@@ -3,6 +3,7 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { CopyButton } from '@/components/CopyButton';
 import { EmptyState, ErrorMessage } from '@/components/ErrorMessage';
+import { Guide } from '@/components/Guide';
 import { Input } from '@/components/Input';
 import { StatusBadge, type BadgeTone } from '@/components/StatusBadge';
 import type { HttpHeader, HttpMethod } from '@/features/http/types';
@@ -310,6 +311,35 @@ function RequestEditor({
 const statusTone = (s: number): BadgeTone =>
   s === 0 ? 'bad' : s >= 500 ? 'bad' : s >= 400 ? 'warn' : s >= 300 ? 'info' : 'good';
 
+const COLLECTIONS_GUIDE = {
+  en: {
+    what: 'Saves a named set of requests, each with its own assertions (status code, a response header, body contains, a JSON-path value, or max response time), and runs the whole set in one go — a lightweight regression check for your own endpoints. Environments hold {{varName}} values (e.g. a host or a token) that get filled into every request’s URL, headers and body when you run.',
+    steps: [
+      'Create an environment and add variables (e.g. host = api.example.com, token = ...), or skip this if you don’t need variables.',
+      'Create a collection, add requests, and use {{varName}} anywhere you want a variable substituted.',
+      'Add assertions to each request (e.g. status == 200, or $.data.id exists).',
+      'Pick the active environment and press "Run all"; see a pass/fail summary per request and copy a Markdown report.',
+    ],
+    example:
+      'Request: GET https://{{host}}/orders/1, assertion: status == 200\nEnvironment: host = api.example.com\n→ Run all sends GET https://api.example.com/orders/1 and checks the assertion.',
+    useCase:
+      'A quick smoke test after a deploy ("do these 10 endpoints still return what they should?"), or re-checking a set of known-good requests across different environments (staging vs. production) just by switching which environment is active.',
+  },
+  fa: {
+    what: 'مجموعه‌ای نام‌دار از درخواست‌ها را ذخیره می‌کند، هرکدام با assertion خودشان (کد status، یک هدر پاسخ، شامل‌بودن بدنه، یک مقدار JSON-path، یا حداکثر زمان پاسخ)، و کل مجموعه را یک‌جا اجرا می‌کند — یک چک سبک رگرسیون برای اندپوینت‌های خودتان. Environmentها مقادیر {{varName}} (مثل یک host یا token) را نگه می‌دارند که هنگام اجرا در URL، هدرها و بدنه‌ی هر درخواست جایگذاری می‌شوند.',
+    steps: [
+      'یک environment بسازید و متغیر اضافه کنید (مثلاً host = api.example.com، token = ...)، یا اگر نیازی به متغیر ندارید این مرحله را رد کنید.',
+      'یک collection بسازید، درخواست اضافه کنید، و هرجا می‌خواهید یک متغیر جایگذاری شود از {{varName}} استفاده کنید.',
+      'به هر درخواست assertion اضافه کنید (مثلاً status == 200، یا $.data.id وجود دارد).',
+      'environment فعال را انتخاب کنید و «Run all» را بزنید؛ خلاصه‌ی موفق/ناموفق هر درخواست را ببینید و گزارش Markdown را کپی کنید.',
+    ],
+    example:
+      'درخواست: GET https://{{host}}/orders/1، assertion: status == 200\nEnvironment: host = api.example.com\n→ Run all یک GET به https://api.example.com/orders/1 می‌فرستد و assertion را بررسی می‌کند.',
+    useCase:
+      'یک smoke test سریع بعد از دیپلوی («آیا این ۱۰ اندپوینت هنوز چیزی که باید را برمی‌گردانند؟»)، یا بررسی دوباره‌ی مجموعه‌ای از درخواست‌های سالم روی محیط‌های مختلف (staging در مقابل production) فقط با عوض کردن environment فعال.',
+  },
+};
+
 export function CollectionsPane() {
   const [collections, setCollections] = useState<Collection[] | null>(null);
   const [environments, setEnvironments] = useState<Environment[] | null>(null);
@@ -399,11 +429,7 @@ export function CollectionsPane() {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-xs text-muted">
-        Save requests into a collection with assertions, pick an environment to fill in{' '}
-        <code className="rounded bg-surface2 px-1 font-mono">{'{{varName}}'}</code> values, then run
-        the whole collection in one go — handy for a regression check across your own endpoints.
-      </p>
+      <Guide en={COLLECTIONS_GUIDE.en} fa={COLLECTIONS_GUIDE.fa} />
 
       <Card title="Environment" icon="settings">
         <div className="flex flex-col gap-2">

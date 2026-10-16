@@ -202,6 +202,33 @@ function ResponseCard({ res, error }: { res: SentResponse | null; error: AppErro
   );
 }
 
+const SEND_GUIDE = {
+  en: {
+    what: 'Builds one HTTP request and sends it for real, straight from your browser, to the system you specify — then shows the actual status, headers, timing and body.',
+    steps: [
+      'Pick a method, enter the URL, add headers and (for non-GET methods) a body.',
+      'Press Send or Ctrl/Cmd+Enter.',
+      'Read the response: status badge, timing, headers (expand to see all), and body (copyable).',
+    ],
+    example:
+      'Method: GET, URL: https://api.example.com/health\n→ 200 OK in 180ms, body: {"status":"ok"}',
+    useCase:
+      'Manually trying a single endpoint with custom headers (e.g. a bearer token) before wiring it into real code, or reproducing a bug report with an exact request.',
+  },
+  fa: {
+    what: 'یک درخواست HTTP می‌سازد و واقعاً، مستقیم از مرورگر شما، به سامانه‌ای که مشخص کردید می‌فرستد — سپس status، هدرها، زمان و بدنه‌ی واقعی پاسخ را نشان می‌دهد.',
+    steps: [
+      'یک متد انتخاب کنید، URL را وارد کنید، هدر و (برای متدهای غیر GET) بدنه اضافه کنید.',
+      'Send یا Ctrl/Cmd+Enter را بزنید.',
+      'پاسخ را ببینید: نشان وضعیت، زمان، هدرها (برای دیدن همه باز کنید)، و بدنه (قابل کپی).',
+    ],
+    example:
+      'متد: GET، URL: https://api.example.com/health\n→ 200 OK در ۱۸۰ میلی‌ثانیه، بدنه: {"status":"ok"}',
+    useCase:
+      'امتحان دستی یک اندپوینت با هدرهای سفارشی (مثل توکن bearer) پیش از نوشتن کد واقعی، یا بازتولید دقیق یک درخواست از روی یک گزارش باگ.',
+  },
+};
+
 function SendPane() {
   const [method, setMethodRaw] = useState<HttpMethod>('GET');
   const [url, setUrl] = useState('');
@@ -246,6 +273,7 @@ function SendPane() {
 
   return (
     <div className="flex flex-col gap-3">
+      <Guide en={SEND_GUIDE.en} fa={SEND_GUIDE.fa} />
       <RequestForm
         method={method}
         setMethod={setMethod}
@@ -289,6 +317,33 @@ function SendPane() {
     </div>
   );
 }
+
+const FUZZ_GUIDE = {
+  en: {
+    what: `Sends one real request per value, substituting it wherever you put the ${FUZZ_MARKER} marker (URL, a header, or the body). Values come from a wordlist, a number range, or a built-in attack preset (SQL injection, XSS, path traversal, command injection, SSRF, NoSQL injection). Responses are grouped by (status, body length) so the common "nothing here" response is greyed out, and scanned for known vulnerability signals (DB errors, stack traces, reflected payloads, …) which are flagged.`,
+    steps: [
+      `Build the request and put ${FUZZ_MARKER} where the value should go, e.g. a URL path segment or an id.`,
+      'Pick a value source: a wordlist (one value per line), a numeric range, or an attack preset.',
+      'Set concurrency (how many requests run at once) and press Start.',
+      'Rows highlighted in red have a flag — read it, then open that exact request in Send to confirm manually.',
+    ],
+    example: `URL: https://api.example.com/users/${FUZZ_MARKER}, preset: SQL injection\n→ one request per payload; a flagged row might read "DB error: MySQL syntax error" — a strong sign of SQL injection.`,
+    useCase:
+      'Checking whether an endpoint is vulnerable to injection, finding which numeric IDs exist (IDOR), or testing many input values quickly without writing a script.',
+  },
+  fa: {
+    what: `به‌ازای هر مقدار یک درخواست واقعی می‌فرستد و آن را هرجا که نشانه‌ی ${FUZZ_MARKER} گذاشته باشید جایگزین می‌کند (URL، یک هدر، یا بدنه). مقادیر از یک wordlist، یک رنج عددی، یا یک preset حمله‌ی آماده (SQL injection، XSS، path traversal، command injection، SSRF، NoSQL injection) می‌آیند. پاسخ‌ها بر اساس (status، طول بدنه) گروه‌بندی می‌شوند تا پاسخ معمول «اینجا چیزی نیست» خاکستری شود، و برای نشانه‌های شناخته‌شده‌ی آسیب‌پذیری (خطای دیتابیس، stack trace، payload بازتاب‌شده، …) اسکن و پرچم‌گذاری می‌شوند.`,
+    steps: [
+      `درخواست را بسازید و ${FUZZ_MARKER} را جایی که مقدار باید برود بگذارید، مثلاً یک قسمت از مسیر URL یا یک id.`,
+      'یک منبع مقدار انتخاب کنید: wordlist (هر خط یک مقدار)، رنج عددی، یا یک preset حمله.',
+      'concurrency (تعداد درخواست‌های هم‌زمان) را تنظیم کنید و Start را بزنید.',
+      'ردیف‌های قرمز یک پرچم دارند — آن را بخوانید، سپس همان درخواست دقیق را در Send باز کنید تا دستی تأیید کنید.',
+    ],
+    example: `URL: https://api.example.com/users/${FUZZ_MARKER}، preset: SQL injection\n→ به‌ازای هر payload یک درخواست؛ یک ردیف پرچم‌خورده ممکن است بنویسد «DB error: MySQL syntax error» — نشانه‌ی قوی SQL injection.`,
+    useCase:
+      'بررسی اینکه آیا یک اندپوینت در برابر injection آسیب‌پذیر است، پیدا کردن اینکه کدام idهای عددی وجود دارند (IDOR)، یا تست سریع مقادیر زیاد بدون نوشتن اسکریپت.',
+  },
+};
 
 function FuzzPane({ seedUrl }: { seedUrl?: string }) {
   const [method, setMethod] = useState<HttpMethod>('GET');
@@ -388,10 +443,7 @@ function FuzzPane({ seedUrl }: { seedUrl?: string }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-xs text-muted">
-        Put <code className="rounded bg-surface2 px-1 font-mono">{FUZZ_MARKER}</code> anywhere in
-        the URL, a header or the body; DevLens sends one request per value, substituting it there.
-      </p>
+      <Guide en={FUZZ_GUIDE.en} fa={FUZZ_GUIDE.fa} />
       <RequestForm
         method={method}
         setMethod={setMethodChecked}
@@ -569,6 +621,35 @@ function FuzzPane({ seedUrl }: { seedUrl?: string }) {
   );
 }
 
+const RATE_LIMIT_GUIDE = {
+  en: {
+    what: 'Sends a burst of identical requests and measures when (if ever) the server starts throttling them — the first 429, any Retry-After header, and median/p95 latency. This is a small, bounded burst to find a threshold, not a flood — DevLens has no DDoS capability.',
+    steps: [
+      'Build the request you want to test (e.g. a login endpoint).',
+      'Set how many requests to send and the concurrency (how many run at once).',
+      'Press Start and watch the colour grid: green = ok, amber = 429, red = 5xx/failed.',
+      'Check the summary for the first throttled request number and its Retry-After value.',
+    ],
+    example:
+      '50 requests at concurrency 5 to /api/login\n→ first 429 at request #31, Retry-After: 60 — the endpoint allows ~30 requests before throttling.',
+    useCase:
+      'Confirming your rate limiter actually kicks in (and at what point), or checking how an endpoint behaves under light concurrent load before you ship it.',
+  },
+  fa: {
+    what: 'یک موج از درخواست‌های یکسان می‌فرستد و اندازه می‌گیرد سرور از کجا (اگر اصلاً) شروع به محدود کردن می‌کند — اولین 429، هر هدر Retry-After، و تأخیر median/p95. این یک موج کوچک و محدود برای پیدا کردن آستانه است، نه یک سیل — DevLens هیچ قابلیت DDoS ندارد.',
+    steps: [
+      'درخواستی که می‌خواهید تست کنید بسازید (مثلاً یک اندپوینت لاگین).',
+      'تعداد درخواست‌ها و concurrency (تعداد هم‌زمان) را تنظیم کنید.',
+      'Start را بزنید و شبکه‌ی رنگی را ببینید: سبز = موفق، نارنجی = 429، قرمز = 5xx/شکست‌خورده.',
+      'در خلاصه، شماره‌ی اولین درخواست محدودشده و مقدار Retry-After آن را ببینید.',
+    ],
+    example:
+      '۵۰ درخواست با concurrency ۵ به /api/login\n→ اولین 429 در درخواست شماره‌ی ۳۱، Retry-After: ۶۰ — این اندپوینت حدود ۳۰ درخواست را پیش از محدودیت قبول می‌کند.',
+    useCase:
+      'اطمینان از اینکه rate limiter شما واقعاً فعال می‌شود (و از کجا)، یا بررسی رفتار یک اندپوینت زیر بار هم‌زمان سبک پیش از انتشار.',
+  },
+};
+
 function RateLimitPane() {
   const [method, setMethod] = useState<HttpMethod>('GET');
   const [url, setUrl] = useState('');
@@ -637,9 +718,7 @@ function RateLimitPane() {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-xs text-muted">
-        Sends the same request repeatedly to see when (if ever) the server starts throttling it.
-      </p>
+      <Guide en={RATE_LIMIT_GUIDE.en} fa={RATE_LIMIT_GUIDE.fa} />
       <RequestForm
         method={method}
         setMethod={setMethodChecked}
@@ -754,6 +833,33 @@ function RateLimitPane() {
   );
 }
 
+const SECURITY_HEADERS_GUIDE = {
+  en: {
+    what: 'Sends one request and audits its response headers the way securityheaders.com does: CSP, HSTS, X-Frame-Options, Referrer-Policy, cookie flags (Secure/HttpOnly/SameSite), a dangerous CORS wildcard + credentials combo, and more — entirely from headers you already received.',
+    steps: [
+      'Build the request (usually just a GET to your page or API root) and press "Check headers".',
+      'Read the findings, grouped by severity (good / info / warn / bad).',
+      'Copy the Markdown report to attach to a ticket or PR.',
+    ],
+    example:
+      'GET https://example.com/\n→ "bad: Missing Strict-Transport-Security" — the site doesn’t force HTTPS on repeat visits.',
+    useCase:
+      'A pre-release security checklist, or confirming a header you just added (e.g. CSP) actually shows up in the real response.',
+  },
+  fa: {
+    what: 'یک درخواست می‌فرستد و هدرهای پاسخ آن را مثل securityheaders.com ممیزی می‌کند: CSP، HSTS، X-Frame-Options، Referrer-Policy، فلگ‌های کوکی (Secure/HttpOnly/SameSite)، ترکیب خطرناک CORS wildcard + credentials، و موارد دیگر — کاملاً از روی هدرهایی که همین الان دریافت کردید.',
+    steps: [
+      'درخواست را بسازید (معمولاً فقط یک GET به صفحه یا ریشه‌ی API) و «Check headers» را بزنید.',
+      'یافته‌ها را بخوانید، گروه‌بندی‌شده بر اساس شدت (good / info / warn / bad).',
+      'گزارش Markdown را کپی کنید تا به یک تیکت یا PR ضمیمه کنید.',
+    ],
+    example:
+      'GET https://example.com/\n→ «bad: Missing Strict-Transport-Security» — سایت در بازدیدهای بعدی HTTPS را اجباری نمی‌کند.',
+    useCase:
+      'یک چک‌لیست امنیتی پیش از انتشار، یا اطمینان از اینکه هدری که الان اضافه کردید (مثل CSP) واقعاً در پاسخ واقعی دیده می‌شود.',
+  },
+};
+
 function SecurityHeadersPane() {
   const [method, setMethod] = useState<HttpMethod>('GET');
   const [url, setUrl] = useState('');
@@ -786,9 +892,7 @@ function SecurityHeadersPane() {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-xs text-muted">
-        Sends a request and audits the response headers, the way securityheaders.com does.
-      </p>
+      <Guide en={SECURITY_HEADERS_GUIDE.en} fa={SECURITY_HEADERS_GUIDE.fa} />
       <RequestForm
         method={method}
         setMethod={setMethod}
@@ -861,6 +965,33 @@ const SOURCE_LABEL: Record<DiscoveredUrl['source'], string> = {
   robots: 'robots.txt',
 };
 
+const DISCOVER_GUIDE = {
+  en: {
+    what: 'Crawls same-origin links starting from one URL — links found on pages, sitemap.xml, and robots.txt — up to a depth and page-count limit. Nothing is tested automatically; you review the list and pick which URLs to send to Fuzz.',
+    steps: [
+      'Enter a full start URL (with https://), set a crawl depth and a max-pages limit.',
+      'Press Discover and wait for the list to fill in, each row tagged by where it was found.',
+      'Click "Test in Fuzz" on any URL to open it there with {{FUZZ}} ready to place.',
+    ],
+    example:
+      'Start: https://example.com/, depth 2\n→ finds /about, /api/docs (from a page link), /admin (from robots.txt) — you decide which, if any, to test further.',
+    useCase:
+      'Mapping out an application’s pages/endpoints before deciding what to test, especially ones not linked from the obvious entry points (found via sitemap.xml or robots.txt instead).',
+  },
+  fa: {
+    what: 'لینک‌های هم‌دامنه را از یک URL شروع می‌کند و کراول می‌کند — لینک‌های پیدا شده روی صفحات، sitemap.xml، و robots.txt — تا یک حد عمق و تعداد صفحه‌ی مشخص. هیچ‌چیز خودکار تست نمی‌شود؛ شما لیست را بازبینی می‌کنید و تصمیم می‌گیرید کدام URLها به Fuzz فرستاده شوند.',
+    steps: [
+      'یک URL شروع کامل (با https://) وارد کنید، عمق کراول و حداکثر تعداد صفحه را تنظیم کنید.',
+      'Discover را بزنید و منتظر پر شدن لیست بمانید، هر ردیف با منبعی که پیدا شده برچسب‌گذاری شده.',
+      'روی «Test in Fuzz» برای هر URL کلیک کنید تا آن را آنجا با {{FUZZ}} آماده باز کند.',
+    ],
+    example:
+      'شروع: https://example.com/، عمق ۲\n→ /about، /api/docs (از یک لینک صفحه)، /admin (از robots.txt) پیدا می‌شود — شما تصمیم می‌گیرید کدام‌ها، اگر اصلاً، بیشتر تست شوند.',
+    useCase:
+      'نقشه‌برداری از صفحات/اندپوینت‌های یک اپلیکیشن پیش از تصمیم‌گیری درباره‌ی چیزی که باید تست شود، مخصوصاً آن‌هایی که از نقاط ورود واضح لینک نشده‌اند (و از sitemap.xml یا robots.txt پیدا شده‌اند).',
+  },
+};
+
 function DiscoverPane({ onTestInFuzz }: { onTestInFuzz: (url: string) => void }) {
   const [start, setStart] = useState('');
   const [maxDepth, setMaxDepth] = useState(2);
@@ -899,12 +1030,7 @@ function DiscoverPane({ onTestInFuzz }: { onTestInFuzz: (url: string) => void })
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-xs text-muted">
-        Finds same-origin links starting from one URL (page links,{' '}
-        <code className="rounded bg-surface2 px-1 font-mono">sitemap.xml</code>,{' '}
-        <code className="rounded bg-surface2 px-1 font-mono">robots.txt</code>), so you can pick
-        which ones to test in Fuzz — nothing is probed automatically.
-      </p>
+      <Guide en={DISCOVER_GUIDE.en} fa={DISCOVER_GUIDE.fa} />
       <Input
         aria-label="Start URL"
         placeholder="https://api.example.com/"

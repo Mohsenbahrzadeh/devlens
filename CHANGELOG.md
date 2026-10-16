@@ -2,6 +2,14 @@
 
 All notable changes are documented here. This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.9.1] - 2026-10-16
+
+### Changed
+
+- **Per-pane Sender guides.** Each Sender sub-tool (Send, Fuzz, Rate limit, Security headers,
+  Discover, Collections) now has its own bilingual Guide with a worked example, alongside the
+  existing overview guide, instead of one combined guide for the whole tool.
+
 ## [0.9.0] - 2026-10-16
 
 ### Added

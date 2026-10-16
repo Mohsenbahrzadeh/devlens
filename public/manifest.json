@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DevLens",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "A privacy-first developer toolbox for inspecting JWTs, JSON, HTTP requests and encoded data.",
   "action": {
     "default_title": "Open DevLens",

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/Button';
 import { CodeBlock, type Language } from '@/components/CodeBlock';
 import { ErrorMessage } from '@/components/ErrorMessage';
+import { Guide } from '@/components/Guide';
 import { Icon } from '@/components/Icon';
 import { Input } from '@/components/Input';
 import { Tabs } from '@/components/Tabs';
@@ -150,6 +151,33 @@ function Rows({
   );
 }
 
+const HTTP_GUIDE = {
+  en: {
+    what: 'Builds a request (headers, raw/form/multipart/GraphQL body) and generates ready-to-paste code for it in cURL, C# (including typed models from a sample response), JavaScript fetch, Python requests, or a .http file — no network call is made here, this only generates text.',
+    steps: [
+      'Set the method, URL, headers and body (or import one from a cURL command, raw HTTP text, or an OpenAPI document).',
+      'Optionally paste a sample JSON response so the C# generator can build typed request/response models.',
+      'Click "Generate" for the language you need; turn on "Mask secrets" before pasting the result into a ticket or chat.',
+    ],
+    example:
+      "URL: https://api.example.com/orders, Method: POST, Body: {\"id\":1}\n→ Generate cURL → curl -X POST 'https://api.example.com/orders' -H 'Content-Type: application/json' -d '{\"id\":1}'",
+    useCase:
+      'Turning a request you just tested into code for your app, generating a typed C# client straight from an API’s sample response, or converting a cURL command a teammate sent you into Python.',
+  },
+  fa: {
+    what: 'یک درخواست (هدرها، بدنه raw/form/multipart/GraphQL) می‌سازد و کد آماده برای آن در cURL، C# (شامل مدل‌های تایپ‌شده از روی یک نمونه پاسخ)، JavaScript fetch، Python requests یا یک فایل .http تولید می‌کند — اینجا هیچ درخواستی واقعاً ارسال نمی‌شود، فقط کد تولید می‌شود.',
+    steps: [
+      'متد، URL، هدرها و بدنه را تنظیم کنید (یا از یک دستور cURL، متن خام HTTP یا یک سند OpenAPI وارد کنید).',
+      'در صورت تمایل یک نمونه پاسخ JSON پیست کنید تا تولیدکننده C# مدل‌های تایپ‌شده درخواست/پاسخ بسازد.',
+      'روی «Generate» برای زبان موردنظرتان بزنید؛ پیش از پیست کردن نتیجه در تیکت یا چت، «Mask secrets» را روشن کنید.',
+    ],
+    example:
+      "URL: https://api.example.com/orders، متد: POST، بدنه: {\"id\":1}\n→ Generate cURL → curl -X POST 'https://api.example.com/orders' -H 'Content-Type: application/json' -d '{\"id\":1}'",
+    useCase:
+      'تبدیل درخواستی که الان تست کردید به کد برای اپلیکیشن‌تان، ساختن یک کلاینت تایپ‌شده C# مستقیم از روی نمونه پاسخ یک API، یا تبدیل یک دستور cURL که یک همکار فرستاده به Python.',
+  },
+};
+
 export function HttpTools() {
   const [method, setMethod] = useState<HttpMethod>('GET');
   const [url, setUrl] = useState('');
@@ -271,6 +299,7 @@ export function HttpTools() {
 
   return (
     <div className="flex flex-col gap-3">
+      <Guide en={HTTP_GUIDE.en} fa={HTTP_GUIDE.fa} />
       <details className="card group overflow-hidden">
         <summary className="flex cursor-pointer items-center gap-2 px-3 py-2 text-[13px] font-semibold hover:bg-surface2/60">
           <Icon name="download" size={14} className="text-accent" />

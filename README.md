@@ -1,5 +1,7 @@
 # DevLens
 
+**[English](README.md) | [فارسی](README.fa.md)**
+
 A privacy-first developer toolbox for inspecting JWTs, JSON, HTTP requests and encoded data directly in your browser.
 
 DevLens is a Chrome extension (Manifest V3) that docks next to your page (Chrome side panel) and inside DevTools. Every tool except **Sender** runs fully locally: no backend, no analytics, no network access. Sender is an explicit, opt-in tool for testing APIs you own or are authorized to test; see [Privacy](#privacy).

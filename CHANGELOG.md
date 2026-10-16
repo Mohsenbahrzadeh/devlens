@@ -2,6 +2,20 @@
 
 All notable changes are documented here. This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.9.0] - 2026-10-16
+
+### Added
+
+- **Bilingual in-app guides.** Every tool (JWT, JSON, Diff, HTTP, Tools, Sender, and the DevTools
+  Network/Journey panel) now has a collapsible "Guide" panel with an English/Persian toggle: what
+  the tool does, step-by-step usage, a worked example, and when to reach for it.
+- **Bilingual README.** Added a full Persian translation ([README.fa.md](README.fa.md)) with a
+  language-switch link at the top of both READMEs; the GitHub repository description is now
+  bilingual too.
+- **DELETE confirmation guard.** Send, Fuzz, Rate limit and Collections now show an explicit
+  warning and require a checkbox acknowledgement before sending a `DELETE` request or batch,
+  since it is the one HTTP method that is usually irreversible.
+
 ## [0.8.0] - 2026-10-16
 
 ### Added

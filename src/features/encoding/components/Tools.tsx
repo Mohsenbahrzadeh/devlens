@@ -4,6 +4,7 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { CopyButton } from '@/components/CopyButton';
 import { EmptyState, ErrorMessage } from '@/components/ErrorMessage';
+import { Guide } from '@/components/Guide';
 import { Input } from '@/components/Input';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Tabs } from '@/components/Tabs';
@@ -665,12 +666,40 @@ const SUB_TABS = [
   { id: 'codes', label: 'Status codes' },
 ];
 
+const TOOLS_GUIDE = {
+  en: {
+    what: 'A grab-bag of small, offline developer utilities: Base64 and URL encode/decode, a query-string parser/builder, Unix timestamp converter, UUID/ULID inspector and generator, SHA/HMAC hashing, a webhook signature verifier, a regex tester, and an HTTP status code reference.',
+    steps: [
+      'Pick the sub-tab for what you need (Base64, URL, Query string, Timestamp, UUID, Generate, Hash, Webhook, Regex, Status codes).',
+      'Paste your input on the left/top; the result updates as you type, or after pressing the action button.',
+      'For Webhook, paste the raw payload, the signature header value, your shared secret and pick the provider’s scheme to verify it locally.',
+    ],
+    example:
+      'Timestamp: 1700000000 → Tue, 14 Nov 2023 22:13:20 GMT (and your local time)\nUUID generate (v7) → 0190f3b2-...-...  (time-ordered, sortable)',
+    useCase:
+      'Quickly decoding a Base64 blob from a header, converting a Unix timestamp from a log line, generating test UUIDs, or confirming a webhook payload’s signature actually matches before trusting it.',
+  },
+  fa: {
+    what: 'مجموعه‌ای از ابزارهای کوچک و کاملاً آفلاین برای برنامه‌نویس‌ها: رمزگذاری/رمزگشایی Base64 و URL، پارسر/سازنده query string، تبدیل Unix timestamp، بازرس و تولیدکننده UUID/ULID، هش SHA/HMAC، تأییدکننده امضای وب‌هوک، تست‌کننده regex و مرجع کدهای وضعیت HTTP.',
+    steps: [
+      'زیرتب موردنیازتان را انتخاب کنید (Base64، URL، Query string، Timestamp، UUID، Generate، Hash، Webhook، Regex، Status codes).',
+      'ورودی را بالا/چپ پیست کنید؛ نتیجه هنگام تایپ یا بعد از زدن دکمه عملیات به‌روز می‌شود.',
+      'برای Webhook، بدنه خام، مقدار هدر امضا، رمز مشترک خودتان را پیست و طرح امضای همان سرویس را انتخاب کنید تا به‌صورت محلی تأیید شود.',
+    ],
+    example:
+      'Timestamp: 1700000000 → Tue, 14 Nov 2023 22:13:20 GMT (و زمان محلی شما)\nتولید UUID (v7) → 0190f3b2-...-...  (ترتیب‌زمانی و قابل مرتب‌سازی)',
+    useCase:
+      'رمزگشایی سریع یک مقدار Base64 از یک هدر، تبدیل یک Unix timestamp از یک خط لاگ، ساختن UUID آزمایشی، یا اطمینان از اینکه امضای یک payload وب‌هوک واقعاً مطابقت دارد پیش از اعتماد به آن.',
+  },
+};
+
 export function Tools({ seed, sub: initialSub }: ToolProps) {
   const [sub, setSub] = useState(
     SUB_TABS.some((t) => t.id === initialSub) ? (initialSub as string) : 'base64',
   );
   return (
     <div className="flex flex-col gap-3">
+      <Guide en={TOOLS_GUIDE.en} fa={TOOLS_GUIDE.fa} />
       <Tabs tabs={SUB_TABS} active={sub} onChange={setSub} label="Developer tools" size="sm" />
       <div role="tabpanel" id={`panel-${sub}`} aria-labelledby={`tab-${sub}`}>
         {sub === 'base64' && (

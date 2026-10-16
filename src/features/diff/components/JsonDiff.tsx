@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/Button';
 import { CopyButton } from '@/components/CopyButton';
 import { EmptyState, ErrorMessage } from '@/components/ErrorMessage';
+import { Guide } from '@/components/Guide';
 import { Input } from '@/components/Input';
 import { TextArea } from '@/components/TextArea';
 import { useCtrlEnter } from '@/hooks/useCtrlEnter';
@@ -40,6 +41,33 @@ function SideBySide({ e }: { e: DiffEntry }) {
   );
 }
 
+const DIFF_GUIDE = {
+  en: {
+    what: 'Structurally compares two JSON documents — not line-by-line text diff — so reordered keys or different array positions don’t show as noise. Arrays of objects with an id/_id/key/uuid field are matched by identity instead of index.',
+    steps: [
+      'Paste the "Original" JSON on the left and the "New" JSON on the right, then compare.',
+      'Add ignore rules for fields that always change (e.g. updatedAt, items[*].id, or **.ts for any nested "ts" field).',
+      'Switch between the list view and side-by-side view, and copy the result as Markdown or JSON.',
+    ],
+    example:
+      'Original: {"items":[{"id":1,"qty":2}]}\nNew:      {"items":[{"id":1,"qty":3}]}\n→ changed: items[id=1].qty: 2 → 3',
+    useCase:
+      'Comparing two API responses to see what actually changed between an old and new version of an endpoint, or reviewing a config/fixture diff where key order shouldn’t matter.',
+  },
+  fa: {
+    what: 'دو سند JSON را به‌صورت ساختاری مقایسه می‌کند — نه مثل diff متنی خط‌به‌خط — پس جابه‌جایی ترتیب کلیدها یا موقعیت آرایه نویز تولید نمی‌کند. آرایه‌هایی از آبجکت که فیلد id/_id/key/uuid دارند بر اساس هویت (نه ایندکس) مقایسه می‌شوند.',
+    steps: [
+      'JSON «قبلی» را سمت چپ و JSON «جدید» را سمت راست پیست کنید و مقایسه بزنید.',
+      'برای فیلدهایی که همیشه تغییر می‌کنند (مثل updatedAt یا items[*].id یا **.ts برای هر فیلد ts تودرتو) قانون نادیده‌گیری اضافه کنید.',
+      'بین نمای لیستی و نمای کنار-هم جابه‌جا شوید و نتیجه را به‌صورت Markdown یا JSON کپی کنید.',
+    ],
+    example:
+      'قبلی: {"items":[{"id":1,"qty":2}]}\nجدید: {"items":[{"id":1,"qty":3}]}\n→ changed: items[id=1].qty: 2 → 3',
+    useCase:
+      'مقایسه دو پاسخ API برای دیدن اینکه بین نسخه قدیم و جدید یک اندپوینت واقعاً چه چیزی تغییر کرده، یا بررسی تفاوت یک کانفیگ/فیکسچر که ترتیب کلیدها در آن اهمیتی ندارد.',
+  },
+};
+
 export function JsonDiff() {
   const [left, setLeft] = useState('');
   const [right, setRight] = useState('');
@@ -67,6 +95,7 @@ export function JsonDiff() {
 
   return (
     <div className="flex flex-col gap-3">
+      <Guide en={DIFF_GUIDE.en} fa={DIFF_GUIDE.fa} />
       <div className="grid grid-cols-2 gap-2">
         <TextArea
           label="Original JSON"

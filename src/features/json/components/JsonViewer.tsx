@@ -5,6 +5,7 @@ import { Card } from '@/components/Card';
 import { CodeBlock } from '@/components/CodeBlock';
 import { CopyButton } from '@/components/CopyButton';
 import { EmptyState, ErrorMessage } from '@/components/ErrorMessage';
+import { Guide } from '@/components/Guide';
 import { Icon } from '@/components/Icon';
 import { Input } from '@/components/Input';
 import { JsonTree } from '@/components/JsonTree';
@@ -24,6 +25,33 @@ const VIEWS = [
   { id: 'query', label: 'JSONPath', icon: 'search' as const },
   { id: 'convert', label: 'Convert', icon: 'sparkles' as const },
 ];
+
+const JSON_GUIDE = {
+  en: {
+    what: 'Format, minify, search and explore JSON as a tree, query it with JSONPath, auto-repair common mistakes (trailing commas, single quotes, unquoted keys), and convert it to TypeScript, Zod, C#, Python, Java, Go, YAML, CSV or XML.',
+    steps: [
+      'Paste JSON (or XML — DevLens offers to convert it to JSON first).',
+      'Use "Tree" to browse and search by key/value, "JSONPath" to pull out specific values, or "Convert" to generate a type/schema in another language.',
+      'If the JSON is broken, a "Repair" suggestion appears automatically with the fixes it would apply.',
+    ],
+    example:
+      'Input: {name: "A", tags: [1,2,], }\n→ Repair fixes the unquoted key and trailing comma → {"name":"A","tags":[1,2]}\nJSONPath $.tags[0] → 1',
+    useCase:
+      'Making sense of a large API response, generating a typed model for your backend/frontend language from a sample payload, or fixing JSON a teammate pasted that has a syntax error.',
+  },
+  fa: {
+    what: 'JSON را فرمت، minify، جست‌وجو و به‌صورت درختی مرور می‌کند، با JSONPath کوئری می‌گیرد، خطاهای رایج (کاما اضافه، کوتیشن تک، کلید بدون کوتیشن) را خودکار تعمیر می‌کند و به TypeScript، Zod، C#، Python، Java، Go، YAML، CSV یا XML تبدیل می‌کند.',
+    steps: [
+      'JSON (یا XML — که DevLens پیشنهاد تبدیلش به JSON را می‌دهد) را پیست کنید.',
+      'از «Tree» برای مرور و جست‌وجو بر اساس کلید/مقدار، از «JSONPath» برای استخراج مقادیر خاص، یا «Convert» برای ساخت مدل/اسکیمای یک زبان دیگر استفاده کنید.',
+      'اگر JSON خراب باشد، یک پیشنهاد «Repair» خودکار با تغییراتی که اعمال می‌کند نشان داده می‌شود.',
+    ],
+    example:
+      'ورودی: {name: "A", tags: [1,2,], }\n← Repair کلید بدون کوتیشن و کامای اضافه را درست می‌کند → {"name":"A","tags":[1,2]}\nJSONPath $.tags[0] → 1',
+    useCase:
+      'فهمیدن یک پاسخ بزرگ API، ساختن یک مدل تایپ‌شده برای زبان بک‌اند/فرانت‌اندتان از روی یک نمونه داده، یا تعمیر JSONای که یک همکار پیست کرده و خطای سینتکسی دارد.',
+  },
+};
 
 export function JsonViewer({ seed }: ToolProps) {
   const [input, setInput] = useState(seed ?? '');
@@ -87,6 +115,7 @@ export function JsonViewer({ seed }: ToolProps) {
 
   return (
     <div className="flex flex-col gap-3">
+      <Guide en={JSON_GUIDE.en} fa={JSON_GUIDE.fa} />
       <TextArea
         label="JSON"
         rows={7}

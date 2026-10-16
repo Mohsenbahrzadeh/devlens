@@ -4,6 +4,7 @@ import { Card } from '@/components/Card';
 import { CodeBlock, type Language } from '@/components/CodeBlock';
 import { CopyButton } from '@/components/CopyButton';
 import { EmptyState } from '@/components/ErrorMessage';
+import { Guide } from '@/components/Guide';
 import { Icon } from '@/components/Icon';
 import { Input } from '@/components/Input';
 import { JsonTree } from '@/components/JsonTree';
@@ -332,6 +333,35 @@ function Detail({ entry, all }: { entry: NetEntry; all: NetEntry[] }) {
   );
 }
 
+const NETWORK_GUIDE = {
+  en: {
+    what: 'Live Network inspector for Chrome DevTools: lists requests the page makes, decodes Bearer tokens, generates code for any request (cURL/C#/fetch/Python, secrets optionally masked), and opens a "Journey" for a request — its final status with a plain-language diagnosis, connection details, timing waterfall, redirects, CORS preflight, and CDN/proxy hops inferred from headers.',
+    steps: [
+      'Open Chrome DevTools on the page you’re debugging, then switch to the DevLens panel.',
+      'Reload the page or trigger the request; it appears in the list (filter by text or toggle "API only").',
+      'Click a row to see headers/body, generate code for it, or open "Journey" for the full diagnosis.',
+      '"Copy report" on Journey produces a Markdown summary you can paste into a ticket.',
+    ],
+    example:
+      'A request to /api/orders returns 401 → Journey shows "401 Unauthorized — the Authorization header was sent but rejected" plus the exact header value, so you can tell an expired-token bug from a missing-header bug.',
+    useCase:
+      'Debugging why a specific request failed or was slow, checking which CDN/proxy served a response, or turning a real request you just saw into code for your app — without leaving DevTools.',
+  },
+  fa: {
+    what: 'بازرس زنده شبکه برای Chrome DevTools: درخواست‌های صفحه را لیست می‌کند، توکن‌های Bearer را رمزگشایی می‌کند، برای هر درخواست کد تولید می‌کند (cURL/C#/fetch/Python، با امکان پنهان‌سازی اطلاعات حساس)، و یک «Journey» برای هر درخواست باز می‌کند — وضعیت نهایی با تشخیص ساده‌فهم، جزئیات اتصال، نمودار زمان‌بندی، ریدایرکت‌ها، CORS preflight و هاپ‌های CDN/پروکسی که از روی هدرها حدس زده می‌شود.',
+    steps: [
+      'روی صفحه‌ای که در حال دیباگ آن هستید Chrome DevTools را باز کنید، سپس به تب DevLens بروید.',
+      'صفحه را رفرش کنید یا درخواست را فعال کنید؛ در لیست ظاهر می‌شود (با متن فیلتر کنید یا «API only» را روشن/خاموش کنید).',
+      'روی یک ردیف کلیک کنید تا هدر/بدنه را ببینید، برایش کد بسازید، یا «Journey» را برای تشخیص کامل باز کنید.',
+      '«Copy report» در Journey یک خلاصه Markdown می‌سازد که می‌توانید در یک تیکت پیست کنید.',
+    ],
+    example:
+      'یک درخواست به /api/orders کد 401 برمی‌گرداند → Journey نشان می‌دهد «401 Unauthorized — هدر Authorization ارسال شده اما رد شده» به‌همراه مقدار دقیق هدر، تا بتوانید باگ توکن‌منقضی‌شده را از باگ هدر-گم‌شده تشخیص دهید.',
+    useCase:
+      'فهمیدن اینکه چرا یک درخواست خاص شکست خورده یا کند بوده، بررسی اینکه کدام CDN/پروکسی یک پاسخ را سرو کرده، یا تبدیل یک درخواست واقعی که الان دیدید به کد برای اپلیکیشن‌تان — بدون خروج از DevTools.',
+  },
+};
+
 export function Panel() {
   const [rows, setRows] = useState<Row[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
@@ -377,6 +407,7 @@ export function Panel() {
 
   return (
     <div className="flex h-full min-h-[420px] flex-col gap-3">
+      <Guide en={NETWORK_GUIDE.en} fa={NETWORK_GUIDE.fa} />
       <header className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-[200px] flex-1">
           <Icon

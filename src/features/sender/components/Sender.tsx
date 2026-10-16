@@ -1,8 +1,10 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { CopyButton } from '@/components/CopyButton';
 import { EmptyState, ErrorMessage } from '@/components/ErrorMessage';
+import { Guide } from '@/components/Guide';
+import { Icon } from '@/components/Icon';
 import { Input } from '@/components/Input';
 import { StatusBadge, type BadgeTone } from '@/components/StatusBadge';
 import { Tabs } from '@/components/Tabs';
@@ -55,6 +57,8 @@ const METHOD_TONE: Record<HttpMethod, string> = {
 };
 const statusTone = (s: number): BadgeTone =>
   s === 0 ? 'bad' : s >= 500 ? 'bad' : s >= 400 ? 'warn' : s >= 300 ? 'info' : 'good';
+
+export const isDestructiveMethod = (m: HttpMethod) => m === 'DELETE';
 
 export function RequestForm({
   method,
@@ -142,6 +146,15 @@ export function RequestForm({
   );
 }
 
+export function DestructiveWarning({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-bad/30 bg-bad/5 p-2.5 text-xs">
+      <Icon name="alert" size={15} className="mt-0.5 shrink-0 text-bad" />
+      <span>{children}</span>
+    </div>
+  );
+}
+
 function ResponseCard({ res, error }: { res: SentResponse | null; error: AppError | null }) {
   if (error) return <ErrorMessage error={error} />;
   if (!res) return <EmptyState icon="send">Send a request to see the response here.</EmptyState>;
@@ -190,17 +203,32 @@ function ResponseCard({ res, error }: { res: SentResponse | null; error: AppErro
 }
 
 function SendPane() {
-  const [method, setMethod] = useState<HttpMethod>('GET');
+  const [method, setMethodRaw] = useState<HttpMethod>('GET');
   const [url, setUrl] = useState('');
   const [headers, setHeaders] = useState<HttpHeader[]>([{ name: '', value: '' }]);
   const [body, setBody] = useState('');
   const [res, setRes] = useState<SentResponse | null>(null);
   const [error, setError] = useState<AppError | null>(null);
   const [sending, setSending] = useState(false);
+  const [destructiveAck, setDestructiveAck] = useState(false);
+
+  const setMethod = (m: HttpMethod) => {
+    setMethodRaw(m);
+    if (!isDestructiveMethod(m)) setDestructiveAck(false);
+  };
+
+  const destructive = isDestructiveMethod(method);
 
   const send = async () => {
     if (!url.trim()) {
       setError({ title: 'Missing URL', message: 'Enter a URL to send.' });
+      return;
+    }
+    if (destructive && !destructiveAck) {
+      setError({
+        title: 'Confirm deletion',
+        message: 'Check the box above to confirm you intend to send this DELETE request.',
+      });
       return;
     }
     setSending(true);
@@ -229,9 +257,29 @@ function SendPane() {
         setBody={setBody}
         urlPlaceholder="https://api.example.com/orders"
       />
+      {destructive && (
+        <DestructiveWarning>
+          <span className="font-semibold">DELETE requests are usually permanent.</span> If this API
+          performs a real deletion, there is no undo from inside DevLens.
+          <label className="mt-1.5 flex cursor-pointer items-center gap-1.5 font-normal">
+            <input
+              type="checkbox"
+              className="accent-[rgb(var(--bad))]"
+              checked={destructiveAck}
+              onChange={(e) => setDestructiveAck(e.target.checked)}
+            />
+            I mean to delete this resource.
+          </label>
+        </DestructiveWarning>
+      )}
       <div className="flex items-center gap-2">
-        <Button variant="primary" icon="send" onClick={() => void send()} disabled={sending}>
-          {sending ? 'Sending…' : 'Send'}
+        <Button
+          variant="primary"
+          icon="send"
+          onClick={() => void send()}
+          disabled={sending || (destructive && !destructiveAck)}
+        >
+          {sending ? 'Sending…' : destructive ? 'Send DELETE' : 'Send'}
         </Button>
         <kbd className="ml-auto rounded-md border border-line bg-surface px-1.5 py-0.5 font-mono text-[10px] text-muted">
           Ctrl/Cmd + Enter
@@ -256,7 +304,14 @@ function FuzzPane({ seedUrl }: { seedUrl?: string }) {
   const [rows, setRows] = useState<FuzzRow[]>([]);
   const [error, setError] = useState<AppError | null>(null);
   const [running, setRunning] = useState(false);
+  const [destructiveAck, setDestructiveAck] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  const setMethodChecked = (m: HttpMethod) => {
+    setMethod(m);
+    if (!isDestructiveMethod(m)) setDestructiveAck(false);
+  };
+  const destructive = isDestructiveMethod(method);
 
   const spec: HttpRequestSpec = { method, url, headers, body };
   const markers = countMarkers(spec);
@@ -278,6 +333,13 @@ function FuzzPane({ seedUrl }: { seedUrl?: string }) {
     }
     if (values.length === 0) {
       setError({ title: 'No values', message: 'Add at least one value to try.' });
+      return;
+    }
+    if (destructive && !destructiveAck) {
+      setError({
+        title: 'Confirm deletion',
+        message: 'Check the box above to confirm you intend to send these DELETE requests.',
+      });
       return;
     }
     setError(null);
@@ -332,7 +394,7 @@ function FuzzPane({ seedUrl }: { seedUrl?: string }) {
       </p>
       <RequestForm
         method={method}
-        setMethod={setMethod}
+        setMethod={setMethodChecked}
         url={url}
         setUrl={setUrl}
         headers={headers}
@@ -341,6 +403,23 @@ function FuzzPane({ seedUrl }: { seedUrl?: string }) {
         setBody={setBody}
         urlPlaceholder={`https://api.example.com/users/${FUZZ_MARKER}`}
       />
+      {destructive && (
+        <DestructiveWarning>
+          <span className="font-semibold">DELETE requests are usually permanent.</span> This will
+          send up to {values.length} real DELETE request{values.length === 1 ? '' : 's'} — commonly
+          used to test whether an endpoint deletes resources it shouldn't (IDOR). If the target
+          actually deletes data, there is no undo from inside DevLens.
+          <label className="mt-1.5 flex cursor-pointer items-center gap-1.5 font-normal">
+            <input
+              type="checkbox"
+              className="accent-[rgb(var(--bad))]"
+              checked={destructiveAck}
+              onChange={(e) => setDestructiveAck(e.target.checked)}
+            />
+            I mean to send these DELETE requests.
+          </label>
+        </DestructiveWarning>
+      )}
       <Tabs
         tabs={[
           { id: 'list', label: 'Wordlist' },
@@ -417,7 +496,7 @@ function FuzzPane({ seedUrl }: { seedUrl?: string }) {
           variant="primary"
           icon="sparkles"
           onClick={() => void run()}
-          disabled={running}
+          disabled={running || (destructive && !destructiveAck)}
           className="ml-auto"
         >
           {running ? 'Running…' : 'Start'}
@@ -500,11 +579,25 @@ function RateLimitPane() {
   const [rows, setRows] = useState<RateRow[]>([]);
   const [error, setError] = useState<AppError | null>(null);
   const [running, setRunning] = useState(false);
+  const [destructiveAck, setDestructiveAck] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  const setMethodChecked = (m: HttpMethod) => {
+    setMethod(m);
+    if (!isDestructiveMethod(m)) setDestructiveAck(false);
+  };
+  const destructive = isDestructiveMethod(method);
 
   const run = async () => {
     if (!url.trim()) {
       setError({ title: 'Missing URL', message: 'Enter a URL to test.' });
+      return;
+    }
+    if (destructive && !destructiveAck) {
+      setError({
+        title: 'Confirm deletion',
+        message: 'Check the box above to confirm you intend to send these DELETE requests.',
+      });
       return;
     }
     setError(null);
@@ -549,7 +642,7 @@ function RateLimitPane() {
       </p>
       <RequestForm
         method={method}
-        setMethod={setMethod}
+        setMethod={setMethodChecked}
         url={url}
         setUrl={setUrl}
         headers={headers}
@@ -558,6 +651,22 @@ function RateLimitPane() {
         setBody={setBody}
         urlPlaceholder="https://api.example.com/login"
       />
+      {destructive && (
+        <DestructiveWarning>
+          <span className="font-semibold">DELETE requests are usually permanent.</span> This will
+          send repeated real DELETE requests to the same URL. If the target actually deletes data,
+          there is no undo from inside DevLens.
+          <label className="mt-1.5 flex cursor-pointer items-center gap-1.5 font-normal">
+            <input
+              type="checkbox"
+              className="accent-[rgb(var(--bad))]"
+              checked={destructiveAck}
+              onChange={(e) => setDestructiveAck(e.target.checked)}
+            />
+            I mean to send these DELETE requests.
+          </label>
+        </DestructiveWarning>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <label className="flex items-center gap-1.5 text-xs text-muted">
           Requests
@@ -587,7 +696,7 @@ function RateLimitPane() {
           variant="primary"
           icon="clock"
           onClick={() => void run()}
-          disabled={running}
+          disabled={running || (destructive && !destructiveAck)}
           className="ml-auto"
         >
           {running ? 'Running…' : 'Start'}
@@ -889,12 +998,48 @@ const SUB_TABS = [
   { id: 'collections', label: 'Collections', icon: 'folder' as const },
 ];
 
+const SENDER_GUIDE = {
+  en: {
+    what: 'The only tool that sends real network requests — for APIs and systems you own or are explicitly authorized to test. It has six parts: Send (one request), Fuzz (one request per value, with built-in SQLi/XSS/path-traversal/SSRF/NoSQLi probes), Rate limit (a burst to find the throttling point — not a DDoS tool), Security headers (CSP/HSTS/cookie/CORS audit), Discover (find same-origin links to review before testing), and Collections (save requests with assertions and run them together).',
+    steps: [
+      'Accept the one-time authorization notice — only point Sender at systems you’re allowed to test.',
+      'Send: build a request and see the real response.',
+      'Fuzz: put {{FUZZ}} in the URL/header/body and try a wordlist, number range, or an attack preset; flagged rows show a likely vulnerability signal.',
+      'Rate limit: send a burst of identical requests to see when the server starts throttling (429, Retry-After).',
+      'Security headers: send one request and get a CSP/HSTS/cookie/CORS audit like securityheaders.com.',
+      'Discover: crawl same-origin links from a start URL, then pick which ones to send to Fuzz.',
+      'Collections: save a set of requests with assertions (status/header/body/JSON-path/time), pick an environment for {{var}} values, and run the whole set for a quick regression check.',
+    ],
+    example:
+      'Fuzz: URL = https://api.example.com/users/{{FUZZ}}, preset = SQL injection\n→ sends one request per payload, flags any response with a SQL error message or an evaluated template expression.',
+    useCase:
+      'Checking your own API for an IDOR or missing input validation, finding where your rate limiter kicks in, auditing security headers before a release, or re-running a known-good set of requests as a smoke test after a deploy.',
+  },
+  fa: {
+    what: 'تنها ابزاری که درخواست واقعی شبکه می‌فرستد — برای APIها و سامانه‌هایی که مالکشان هستید یا صریحاً مجاز به تست آن‌ها هستید. شش بخش دارد: Send (یک درخواست)، Fuzz (یک درخواست به‌ازای هر مقدار، با پروب‌های آماده SQLi/XSS/path-traversal/SSRF/NoSQLi)، Rate limit (یک موج درخواست برای پیدا کردن نقطه محدودیت — نه ابزار DDoS)، Security headers (ممیزی CSP/HSTS/کوکی/CORS)، Discover (پیدا کردن لینک‌های هم‌دامنه برای بازبینی پیش از تست) و Collections (ذخیره درخواست‌ها با assertion و اجرای همه با هم).',
+    steps: [
+      'اعلان تأیید یک‌باره را قبول کنید — Sender را فقط روی سامانه‌هایی اجرا کنید که مجاز به تست آن‌ها هستید.',
+      'Send: یک درخواست بسازید و پاسخ واقعی را ببینید.',
+      'Fuzz: {{FUZZ}} را در URL/هدر/بدنه بگذارید و یک wordlist، رنج عددی یا preset حمله را امتحان کنید؛ ردیف‌های پرچم‌خورده احتمالاً یک نشانه آسیب‌پذیری دارند.',
+      'Rate limit: یک موج درخواست‌های یکسان بفرستید تا ببینید سرور از کجا محدودیت اعمال می‌کند (429، Retry-After).',
+      'Security headers: یک درخواست بفرستید و یک ممیزی CSP/HSTS/کوکی/CORS مثل securityheaders.com بگیرید.',
+      'Discover: لینک‌های هم‌دامنه را از یک URL شروع کراول کنید، سپس انتخاب کنید کدام‌ها به Fuzz فرستاده شوند.',
+      'Collections: مجموعه‌ای از درخواست‌ها را با assertion (status/header/body/JSON-path/زمان) ذخیره کنید، یک environment برای مقادیر {{var}} انتخاب کنید و کل مجموعه را برای یک چک سریع رگرسیون اجرا کنید.',
+    ],
+    example:
+      'Fuzz: URL = https://api.example.com/users/{{FUZZ}}، preset = SQL injection\n→ به‌ازای هر payload یک درخواست می‌فرستد و هر پاسخی که پیام خطای SQL یا یک عبارت template ارزیابی‌شده داشته باشد را پرچم می‌زند.',
+    useCase:
+      'بررسی API خودتان برای IDOR یا اعتبارسنجی ورودی ناقص، پیدا کردن جایی که rate limiter شما فعال می‌شود، ممیزی هدرهای امنیتی پیش از ریلیز، یا اجرای دوباره یک مجموعه درخواست سالم به‌عنوان smoke test بعد از دیپلوی.',
+  },
+};
+
 export function Sender() {
   const [sub, setSub] = useState('send');
   const [fuzzSeed, setFuzzSeed] = useState<{ url: string; nonce: number } | undefined>(undefined);
   return (
     <AuthorizationGate>
       <div className="flex flex-col gap-3">
+        <Guide en={SENDER_GUIDE.en} fa={SENDER_GUIDE.fa} />
         <Tabs tabs={SUB_TABS} active={sub} onChange={setSub} label="Sender tools" size="sm" />
         <div role="tabpanel" id={`panel-${sub}`} aria-labelledby={`tab-${sub}`}>
           {sub === 'send' && <SendPane />}

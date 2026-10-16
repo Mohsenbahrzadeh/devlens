@@ -4,6 +4,7 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { CopyButton } from '@/components/CopyButton';
 import { EmptyState, ErrorMessage } from '@/components/ErrorMessage';
+import { Guide } from '@/components/Guide';
 import { Icon } from '@/components/Icon';
 import { Input } from '@/components/Input';
 import { JsonTree } from '@/components/JsonTree';
@@ -381,6 +382,35 @@ function Create({ onOpen }: { onOpen: (token: string) => void }) {
   );
 }
 
+const JWT_GUIDE = {
+  en: {
+    what: 'Decodes a JWT (header + payload) entirely in your browser, highlights claim meanings and expiry, checks common security pitfalls, verifies a signature, and can create a test token signed with your own secret or key.',
+    steps: [
+      'Paste a token (raw, "Bearer <token>", or a quoted/escaped value is fine — DevLens extracts it).',
+      'Read the decoded header/payload and the exp/nbf/iat status shown in your local time.',
+      'Open "Verify" and paste the matching secret (HS*) or public key / JWK (RS*/PS*/ES*) to check the signature.',
+      'Switch to "Create test token" to sign your own payload with an HMAC secret for local testing.',
+    ],
+    example:
+      'Paste: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMiLCJleHAiOjE3MzAwMDAwMDB9.dGVzdA\n→ DevLens shows header {"alg":"HS256"}, payload {"sub":"123","exp":...} and flags whether it has expired.',
+    useCase:
+      'Debugging an auth bug ("why is this API returning 401?"), inspecting a token a teammate sent you, or signing a throwaway token to test an endpoint locally — all without sending the token anywhere.',
+  },
+  fa: {
+    what: 'یک JWT (هدر + payload) را کاملاً داخل مرورگر خودتان رمزگشایی می‌کند، معنی claimها و زمان انقضا را نشان می‌دهد، چند مشکل امنیتی رایج را بررسی می‌کند، امضا را تأیید می‌کند و می‌تواند یک توکن آزمایشی با کلید/رمز خودتان بسازد.',
+    steps: [
+      'توکن را پیست کنید (خام، به‌صورت "Bearer <token>"، یا حتی داخل گیومه — DevLens خودش استخراج می‌کند).',
+      'هدر/payload رمزگشایی‌شده و وضعیت exp/nbf/iat را به وقت محلی خودتان ببینید.',
+      'بخش «Verify» را باز کنید و رمز مشترک (HS*) یا کلید عمومی/JWK (RS*/PS*/ES*) را برای بررسی امضا وارد کنید.',
+      'به «Create test token» بروید تا یک payload دلخواه را با یک رمز HMAC امضا کنید، برای تست محلی.',
+    ],
+    example:
+      'پیست کنید: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMiLCJleHAiOjE3MzAwMDAwMDB9.dGVzdA\n← DevLens هدر {"alg":"HS256"}، payload {"sub":"123","exp":...} را نشان می‌دهد و می‌گوید آیا منقضی شده یا نه.',
+    useCase:
+      'وقتی می‌خواهید بفهمید چرا یک API خطای ۴۰۱ می‌دهد، وقتی یک همکار توکنی برایتان فرستاده و می‌خواهید محتوایش را ببینید، یا وقتی می‌خواهید یک توکن آزمایشی برای تست محلی یک اندپوینت بسازید — بدون اینکه توکن جایی ارسال شود.',
+  },
+};
+
 export function JwtDecoder({ seed }: ToolProps) {
   const [mode, setMode] = useState<'decode' | 'create'>('decode');
   const [opened, setOpened] = useState<string | undefined>(seed);
@@ -388,6 +418,7 @@ export function JwtDecoder({ seed }: ToolProps) {
 
   return (
     <div className="flex flex-col gap-3">
+      <Guide en={JWT_GUIDE.en} fa={JWT_GUIDE.fa} />
       <Tabs
         tabs={[
           { id: 'decode', label: 'Decode & verify', icon: 'sparkles' },

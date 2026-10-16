@@ -28,7 +28,7 @@ import {
 import { applyEnvironment, emptyEnvironment, type Environment } from '../utils/environments';
 import { sendRequest } from '../utils/network';
 import { collectionRunToMarkdown } from '../utils/reportMarkdown';
-import { RequestForm } from './Sender';
+import { DestructiveWarning, isDestructiveMethod, RequestForm } from './Sender';
 
 const ASSERTION_KINDS: Assertion['kind'][] = [
   'status',
@@ -318,6 +318,7 @@ export function CollectionsPane() {
   const [results, setResults] = useState<RunResult[] | null>(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<AppError | null>(null);
+  const [destructiveAck, setDestructiveAck] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -355,8 +356,17 @@ export function CollectionsPane() {
   const updateSelected = (c: Collection) =>
     setAndStoreCollections(collections.map((x) => (x.id === c.id ? c : x)));
 
+  const hasDestructive = selected?.requests.some((r) => isDestructiveMethod(r.method)) ?? false;
+
   const run = async () => {
     if (!selected || selected.requests.length === 0) return;
+    if (hasDestructive && !destructiveAck) {
+      setError({
+        title: 'Confirm deletion',
+        message: 'Check the box above to confirm — this collection includes DELETE requests.',
+      });
+      return;
+    }
     setRunning(true);
     setError(null);
     setResults(null);
@@ -453,6 +463,7 @@ export function CollectionsPane() {
               onChange={(e) => {
                 setSelectedId(e.target.value || null);
                 setResults(null);
+                setDestructiveAck(false);
               }}
               className="field font-semibold"
             >
@@ -469,6 +480,7 @@ export function CollectionsPane() {
                 const c = emptyCollection();
                 setAndStoreCollections([...collections, c]);
                 setSelectedId(c.id);
+                setDestructiveAck(false);
               }}
             >
               New collection
@@ -480,6 +492,7 @@ export function CollectionsPane() {
                   setAndStoreCollections(collections.filter((c) => c.id !== selected.id));
                   setSelectedId(null);
                   setResults(null);
+                  setDestructiveAck(false);
                 }}
               >
                 Delete
@@ -532,12 +545,29 @@ export function CollectionsPane() {
                   variant="primary"
                   icon="send"
                   onClick={() => void run()}
-                  disabled={running || selected.requests.length === 0}
+                  disabled={
+                    running || selected.requests.length === 0 || (hasDestructive && !destructiveAck)
+                  }
                   className="ml-auto"
                 >
                   {running ? 'Running…' : 'Run all'}
                 </Button>
               </div>
+              {hasDestructive && (
+                <DestructiveWarning>
+                  <span className="font-semibold">This collection includes DELETE requests.</span>{' '}
+                  If the target actually deletes data, there is no undo from inside DevLens.
+                  <label className="mt-1.5 flex cursor-pointer items-center gap-1.5 font-normal">
+                    <input
+                      type="checkbox"
+                      className="accent-[rgb(var(--bad))]"
+                      checked={destructiveAck}
+                      onChange={(e) => setDestructiveAck(e.target.checked)}
+                    />
+                    I mean to run the DELETE requests in this collection.
+                  </label>
+                </DestructiveWarning>
+              )}
             </div>
           )}
         </div>

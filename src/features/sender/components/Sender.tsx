@@ -25,10 +25,12 @@ import {
   parseWordlist,
   type FuzzRow,
 } from '../utils/fuzz';
+import { CollectionsPane } from './CollectionsPane';
 import { discoverUrls, type DiscoveredUrl } from '../utils/discover';
 import { sendRequest, type SentResponse } from '../utils/network';
 import { detectSignals, PAYLOAD_SETS } from '../utils/payloads';
 import { analyzeRateResults, runBatch, type RateRow } from '../utils/rateLimit';
+import { fuzzToMarkdown, securityHeadersToMarkdown } from '../utils/reportMarkdown';
 import {
   analyzeSecurityHeaders,
   summarize,
@@ -54,7 +56,7 @@ const METHOD_TONE: Record<HttpMethod, string> = {
 const statusTone = (s: number): BadgeTone =>
   s === 0 ? 'bad' : s >= 500 ? 'bad' : s >= 400 ? 'warn' : s >= 300 ? 'info' : 'good';
 
-function RequestForm({
+export function RequestForm({
   method,
   setMethod,
   url,
@@ -432,15 +434,18 @@ function FuzzPane({ seedUrl }: { seedUrl?: string }) {
           title={`Results (${rows.length}/${values.length})`}
           icon="search"
           actions={
-            <CopyButton
-              text={rows
-                .map(
-                  (r) =>
-                    `${r.value}\t${r.status}\t${r.bodyLength}\t${r.timeMs}ms${r.baseline ? '\tbaseline' : ''}${r.flags.length ? `\t${r.flags.join('; ')}` : ''}`,
-                )
-                .join('\n')}
-              label="Copy CSV"
-            />
+            <div className="flex gap-2">
+              <CopyButton
+                text={rows
+                  .map(
+                    (r) =>
+                      `${r.value}\t${r.status}\t${r.bodyLength}\t${r.timeMs}ms${r.baseline ? '\tbaseline' : ''}${r.flags.length ? `\t${r.flags.join('; ')}` : ''}`,
+                  )
+                  .join('\n')}
+                label="Copy CSV"
+              />
+              <CopyButton text={fuzzToMarkdown(rows, FUZZ_MARKER, url)} label="Copy report" />
+            </div>
           }
         >
           <div className="max-h-96 overflow-auto">
@@ -696,7 +701,16 @@ function SecurityHeadersPane() {
         <EmptyState icon="shield">Send a request to audit its response headers.</EmptyState>
       )}
       {findings && bySeverity && (
-        <Card title={`Findings for ${checkedUrl}`} icon="shield">
+        <Card
+          title={`Findings for ${checkedUrl}`}
+          icon="shield"
+          actions={
+            <CopyButton
+              text={securityHeadersToMarkdown(checkedUrl, findings)}
+              label="Copy report"
+            />
+          }
+        >
           <div className="mb-3 flex gap-2 text-xs">
             <span className="rounded-full bg-good/15 px-2 py-0.5 font-semibold text-good">
               {bySeverity.good} good
@@ -872,6 +886,7 @@ const SUB_TABS = [
   { id: 'rate', label: 'Rate limit', icon: 'clock' as const },
   { id: 'headers', label: 'Security headers', icon: 'shield' as const },
   { id: 'discover', label: 'Discover', icon: 'search' as const },
+  { id: 'collections', label: 'Collections', icon: 'folder' as const },
 ];
 
 export function Sender() {
@@ -894,6 +909,7 @@ export function Sender() {
               }}
             />
           )}
+          {sub === 'collections' && <CollectionsPane />}
         </div>
       </div>
     </AuthorizationGate>

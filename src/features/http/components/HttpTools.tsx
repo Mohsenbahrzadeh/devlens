@@ -15,6 +15,7 @@ import { generateCSharp } from '../generators/csharp';
 import { generateTypedCSharp } from '../generators/csharpClient';
 import { generateCurl } from '../generators/curl';
 import { generateFetch } from '../generators/fetch';
+import { generateHttpFile } from '../generators/httpFile';
 import { parseCurl } from '../generators/parseCurl';
 import { generatePython } from '../generators/python';
 import {
@@ -35,7 +36,7 @@ import { formatGraphQL } from '../utils/graphql';
 import { operationToRequest, parseOpenApi, type OpenApiDoc } from '../utils/openapi';
 import { parseRawHttp } from '../utils/rawHttp';
 
-export type Target = 'curl' | 'csharp' | 'csharpTyped' | 'fetch' | 'python';
+export type Target = 'curl' | 'csharp' | 'csharpTyped' | 'fetch' | 'python' | 'httpFile';
 interface Section {
   title: string;
   lang: Language;
@@ -62,6 +63,7 @@ const TARGETS: Record<
     run: generateFetch,
   },
   python: { label: 'Python (requests)', short: 'Python', lang: 'python', run: generatePython },
+  httpFile: { label: '.http file', short: '.http', lang: 'text', run: generateHttpFile },
 };
 export const TARGET_IDS = Object.keys(TARGETS) as Target[];
 export const TARGET_LABELS = Object.fromEntries(

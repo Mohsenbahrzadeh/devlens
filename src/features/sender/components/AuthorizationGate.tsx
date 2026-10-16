@@ -34,9 +34,10 @@ export function AuthorizationGate({ children }: { children: ReactNode }) {
           <p className="mt-1 text-xs text-muted">
             Unlike the rest of DevLens, this tool makes outbound network requests from your browser
             — including repeated requests (Fuzz, with built-in SQL injection / XSS / path traversal
-            probes), bursts of requests (Rate limit) and crawling a site for other pages (Discover).
-            Only point it at systems you own or are explicitly authorized to test. Sending
-            unauthorized traffic to a system you do not control can be illegal.
+            probes), bursts of requests (Rate limit), crawling a site for other pages (Discover),
+            and running a saved set of requests in one go (Collections). Only point it at systems
+            you own or are explicitly authorized to test. Sending unauthorized traffic to a system
+            you do not control can be illegal.
           </p>
         </div>
       </div>

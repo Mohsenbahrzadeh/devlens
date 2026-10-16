@@ -2,6 +2,23 @@
 
 All notable changes are documented here. This project follows [Semantic Versioning](https://semver.org/).
 
+## [0.8.0] - 2026-10-16
+
+### Added
+
+- **Sender → Collections.** Save a named set of requests, each with its own assertions
+  (status code, a response header, body contains, a JSON-path value, max response time), and
+  run the whole set in one go — a lightweight regression check for your own endpoints. Shows a
+  pass/fail summary per request and an overall count.
+- **Environments.** Define named sets of `{{varName}}` variables and pick an active one; Collections
+  substitutes them into the URL, headers and body of every request it runs. Separate from Fuzz's
+  `{{FUZZ}}` marker, which Collections does not touch.
+- **Markdown reports.** "Copy report" buttons on Fuzz, Security headers and Collection runs produce
+  a ready-to-paste Markdown summary (results table / findings list / per-request pass-fail), next to
+  the existing Journey report.
+- **`.http` file export** in the HTTP tab's code generators, for opening a request directly in the
+  VS Code REST Client or JetBrains HTTP Client.
+
 ## [0.7.0] - 2026-10-15
 
 ### Added

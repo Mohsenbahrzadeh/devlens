@@ -1,6 +1,6 @@
 {
   "name": "devlens",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "description": "A privacy-first developer toolbox for inspecting JWTs, JSON, HTTP requests and encoded data directly in your browser.",
   "license": "MIT",
